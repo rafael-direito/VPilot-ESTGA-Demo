@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 21:13:44
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-20 12:02:09
+# @Last Modified time: 2022-10-20 12:05:55
 
 # general imports
 import pytest
@@ -41,7 +41,6 @@ def test_simple_organization_get():
         db=database,
         organization=organization1
     )
-    
 
     response = test_client.get(
         f"/organization/{result.id}"
@@ -51,7 +50,6 @@ def test_simple_organization_get():
     assert response.json()['name'] == "XXX's Testbed"
     assert response.json()['tradingName'] == "XXX"
     assert response.json()['organizationType'] == "Testbed"
-
 
 
 def test_organization_with_exist_during_get():
