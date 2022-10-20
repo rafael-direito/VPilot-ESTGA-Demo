@@ -3,16 +3,15 @@
 # @Email:  rdireito@av.it.pt
 # @Copyright: Insituto de Telecomunicações - Aveiro, Aveiro, Portugal
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-20 22:52:23
+# @Last Modified time: 2022-10-20 23:07:40
 
 # generic imports
-from database.database import SessionLocal
 from sqlalchemy.orm import Session
-from fastapi import APIRouter, Depends, Query, Path, Request
+from fastapi import APIRouter, Depends, Query, Request
 from database.crud import crud
 from http import HTTPStatus
 from fastapi.encoders import jsonable_encoder
-from typing import Optional, List
+from typing import Optional
 
 # custom imports
 from routers import utils as Utils
