@@ -3,7 +3,7 @@
 # @Email:  rdireito@av.it.pt
 # @Copyright: Insituto de Telecomunicações - Aveiro, Aveiro, Portugal
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-20 11:47:01
+# @Last Modified time: 2022-10-20 16:44:55
 
 # generic imports
 from database.database import SessionLocal
@@ -19,18 +19,14 @@ from typing import Optional
 from routers import utils as Utils
 import database.crud.exceptions as CRUDExceptions
 import schemas.tmf632_party_mgmt as TMF632Schemas
+import main
 
 router = APIRouter()
 
 
 # Dependency
 def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
+    return main.get_db
 
 @router.post(
     "/organization/",
