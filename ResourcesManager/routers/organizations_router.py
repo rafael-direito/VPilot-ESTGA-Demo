@@ -3,7 +3,7 @@
 # @Email:  rdireito@av.it.pt
 # @Copyright: Insituto de Telecomunicações - Aveiro, Aveiro, Portugal
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-20 10:06:19
+# @Last Modified time: 2022-10-20 11:47:01
 
 # generic imports
 from database.database import SessionLocal
@@ -13,6 +13,7 @@ from fastapi import Depends
 from database.crud import crud
 from http import HTTPStatus
 from fastapi.encoders import jsonable_encoder
+from typing import Optional
 
 # custom imports
 from routers import utils as Utils
@@ -79,12 +80,32 @@ async def create_organization(organization: TMF632Schemas.OrganizationCreate,
     description="This operation list or find Organization entities",
     response_model=list[TMF632Schemas.Organization],
 )
-async def get_organization(db: Session = Depends(get_db)):
+@router.get(
+    "/organization/{id}",
+    tags=["organization"],
+    summary="List or find Organization objects",
+    description="This operation list or find Organization entities",
+    response_model=list[TMF632Schemas.Organization],
+)
+async def get_organization(id: Optional[int] = None,
+                           db: Session = Depends(get_db)
+                           ):
     try:
-        organizations = crud.get_all_organizations(db)
+        # If getting all organizations
+        if not id:
+            organizations = crud.get_all_organizations(db)
+            return Utils.create_http_response(
+                http_status=HTTPStatus.OK,
+                content=jsonable_encoder(organizations)
+            )
+
+        # If getting a specific organiation
+        organization = crud.get_organization_by_id(db, id)
         return Utils.create_http_response(
             http_status=HTTPStatus.OK,
-            content=jsonable_encoder(organizations)
+            content=jsonable_encoder(
+                organization if organization else {}
+            )
         )
 
     except CRUDExceptions.ImpossibleToCreateDatabaseEntry as exception:

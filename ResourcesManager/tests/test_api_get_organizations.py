@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 21:13:44
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-20 12:02:09
+# @Last Modified time: 2022-10-20 11:52:58
 
 # general imports
 import pytest
@@ -26,7 +26,7 @@ def test_db():
 
 
 # Tests
-def test_simple_organization_get():
+def test_simple_organizations_get():
 
     # Prepare Test
     database = next(override_get_db())
@@ -36,25 +36,34 @@ def test_simple_organization_get():
         name="XXX's Testbed",
         organizationType="Testbed"
     )
+    organization2 = TMF632Schemas.OrganizationCreate(
+        tradingName="YYY",
+        name="YYY's Testbed",
+        organizationType="Testbed"
+    )
 
-    result = crud.create_organization(
+    crud.create_organization(
         db=database,
         organization=organization1
     )
-    
+    crud.create_organization(
+        db=database,
+        organization=organization2
+    )
 
     response = test_client.get(
-        f"/organization/{result.id}"
+        "/organization/"
     )
 
     assert response.status_code == 200
-    assert response.json()['name'] == "XXX's Testbed"
-    assert response.json()['tradingName'] == "XXX"
-    assert response.json()['organizationType'] == "Testbed"
+    assert len(response.json()) == 2
+    assert response.json()[0]['name'] == "XXX's Testbed"
+    assert response.json()[0]['tradingName'] == "XXX"
+    assert response.json()[1]['name'] == "YYY's Testbed"
+    assert response.json()[1]['tradingName'] == "YYY"
 
 
-
-def test_organization_with_exist_during_get():
+def test_organizations_with_exist_during_get():
 
     # Prepare Test
     database = next(override_get_db())
@@ -69,13 +78,13 @@ def test_organization_with_exist_during_get():
         )
     )
 
-    result = crud.create_organization(
+    crud.create_organization(
         db=database,
         organization=organization
     )
 
     response = test_client.get(
-        f"/organization/{result.id}"
+        "/organization/"
     )
 
     # Prepare Expected Outputs
@@ -83,24 +92,25 @@ def test_organization_with_exist_during_get():
     expectedEndDateTime = datetime.datetime(2016, 10, 22, 8, 31, 52, 26000)
 
     obtainedStartDateTime = datetime.datetime.strptime(
-        response.json()['existsDuring']["startDateTime"],
+        response.json()[0]['existsDuring']["startDateTime"],
         '%Y-%m-%dT%H:%M:%S.%f'
     )
     obtainedEndDateTime = datetime.datetime.strptime(
-        response.json()['existsDuring']["endDateTime"],
+        response.json()[0]['existsDuring']["endDateTime"],
         '%Y-%m-%dT%H:%M:%S.%f'
     )
 
     # Test
 
     assert response.status_code == 200
-    assert response.json()['name'] == "XXX's Testbed"
-    assert response.json()['tradingName'] == "XXX"
+    assert len(response.json()) == 1
+    assert response.json()[0]['name'] == "XXX's Testbed"
+    assert response.json()[0]['tradingName'] == "XXX"
     assert obtainedStartDateTime == expectedStartDateTime
     assert obtainedEndDateTime == expectedEndDateTime
 
 
-def test_all_fields_in_organization_get():
+def test_all_fields_in_organizations_get():
 
     # Prepare Test
     database = next(override_get_db())
@@ -109,46 +119,25 @@ def test_all_fields_in_organization_get():
         tradingName="XXX",
     )
 
-    result = crud.create_organization(
+    crud.create_organization(
         db=database,
         organization=organization
     )
 
     response = test_client.get(
-        f"/organization/{result.id}"
+        "/organization/"
     )
 
     assert response.status_code == 200
-    assert response.json()['tradingName'] == "XXX"
-    assert response.json()['name'] is None
-    assert response.json()['contactMedium'] == []
-    assert response.json()['creditRating'] == []
-    assert response.json()['externalReference'] == []
-    assert response.json()['organizationChildRelationship'] == []
-    assert response.json()['organizationIdentification'] == []
-    assert response.json()['otherName'] == []
-    assert response.json()['partyCharacteristic'] == []
-    assert response.json()['relatedParty'] == []
-    assert response.json()['taxExemptionCertificate'] == []
-
-
-def test_get_nonexistent_organization_from_database():
-
-    # Test
-    response = test_client.get(
-        "/organization/1"
-    )
-    assert response.status_code == 200
-    assert response.json() == {}
-
-
-def test_invalid_get_organization_from_database():
-
-    # Test
-    response = test_client.get(
-        "/organization/my_str"
-    )
-    assert response.status_code == 400
-    assert "Error" in response.json()['reason']
-    assert "payload_location=path/id" in response.json()['reason']
-    assert "value is not a valid integer" in response.json()['reason']
+    assert len(response.json()) == 1
+    assert response.json()[0]['tradingName'] == "XXX"
+    assert response.json()[0]['name'] is None
+    assert response.json()[0]['contactMedium'] == []
+    assert response.json()[0]['creditRating'] == []
+    assert response.json()[0]['externalReference'] == []
+    assert response.json()[0]['organizationChildRelationship'] == []
+    assert response.json()[0]['organizationIdentification'] == []
+    assert response.json()[0]['otherName'] == []
+    assert response.json()[0]['partyCharacteristic'] == []
+    assert response.json()[0]['relatedParty'] == []
+    assert response.json()[0]['taxExemptionCertificate'] == []

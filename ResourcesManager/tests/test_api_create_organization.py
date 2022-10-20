@@ -2,16 +2,12 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 21:13:44
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-18 12:09:01
+# @Last Modified time: 2022-10-20 11:39:10
 
 # general imports
 import pytest
-from pydantic import ValidationError
 
 # custom imports
-from database.crud import crud
-import schemas.tmf632_party_mgmt as TMF632Schemas
-from tests.configure_test_db import override_get_db
 from tests.configure_test_db import engine
 from tests.configure_test_db import test_client
 from database.database import Base
