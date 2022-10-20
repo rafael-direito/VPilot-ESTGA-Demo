@@ -3,23 +3,23 @@
 # @Email:  rdireito@av.it.pt
 # @Copyright: Insituto de Telecomunicações - Aveiro, Aveiro, Portugal
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-20 16:47:47
+# @Last Modified time: 2022-10-20 22:52:23
 
 # generic imports
 from database.database import SessionLocal
 from sqlalchemy.orm import Session
-from fastapi import APIRouter
-from fastapi import Depends
+from fastapi import APIRouter, Depends, Query, Path, Request
 from database.crud import crud
 from http import HTTPStatus
 from fastapi.encoders import jsonable_encoder
-from typing import Optional
+from typing import Optional, List
 
 # custom imports
 from routers import utils as Utils
 import database.crud.exceptions as CRUDExceptions
 import schemas.tmf632_party_mgmt as TMF632Schemas
 import main
+from routers.aux import GetOrganizationFilters
 
 router = APIRouter()
 
@@ -84,9 +84,19 @@ async def create_organization(organization: TMF632Schemas.OrganizationCreate,
     description="This operation list or find Organization entities",
     response_model=list[TMF632Schemas.Organization],
 )
-async def get_organization(id: Optional[int] = None,
-                           db: Session = Depends(get_db)
-                           ):
+async def get_organization(
+        request: Request,
+        id: Optional[int] = None,
+        fields: Optional[str] = Query(
+            default=None,
+            regex="^(("
+            + '|'.join(TMF632Schemas.Organization.__fields__.keys())
+            + ")(,)?)+$"
+        ),
+        filter: GetOrganizationFilters = Depends(),
+        db: Session = Depends(get_db)
+        ):
+
     try:
         # If getting all organizations
         if not id:
