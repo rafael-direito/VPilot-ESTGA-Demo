@@ -3,7 +3,7 @@
 # @Email:  rdireito@av.it.pt
 # @Copyright: Insituto de Telecomunicações - Aveiro, Aveiro, Portugal
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-20 16:44:55
+# @Last Modified time: 2022-10-20 16:47:16
 
 # generic imports
 from database.database import SessionLocal
@@ -26,7 +26,7 @@ router = APIRouter()
 
 # Dependency
 def get_db():
-    return main.get_db
+    return next(main.get_db())
 
 @router.post(
     "/organization/",
