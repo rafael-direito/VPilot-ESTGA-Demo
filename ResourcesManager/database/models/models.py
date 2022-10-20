@@ -2,10 +2,10 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 11:38:27
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-18 10:48:51
+# @Last Modified time: 2022-10-19 23:14:55
 
 # generic imports
-from sqlalchemy import Boolean, Column, ForeignKey, String, Column, DateTime
+from sqlalchemy import Boolean, Column, ForeignKey, String, DateTime
 from sqlalchemy import Integer
 
 # custom imports

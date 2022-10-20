@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 22:45:02
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-17 23:34:36
+# @Last Modified time: 2022-10-20 10:14:01
 
 # general imports
 from sqlalchemy import create_engine
@@ -11,6 +11,8 @@ from fastapi.testclient import TestClient
 
 # custom imports
 from main import app, get_db
+from routers import organizations_router
+
 
 engine = create_engine(
     url="sqlite:///./test.db",
@@ -34,4 +36,5 @@ def override_get_db():
 
 
 app.dependency_overrides[get_db] = override_get_db
+app.dependency_overrides[organizations_router.get_db] = override_get_db
 test_client = TestClient(app)

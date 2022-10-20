@@ -3,7 +3,7 @@
 # @Email:  rdireito@av.it.pt
 # @Copyright: Insituto de Telecomunicações - Aveiro, Aveiro, Portugal
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-17 21:21:18
+# @Last Modified time: 2022-10-20 10:16:19
 
 # generic imports
 from fastapi import FastAPI
@@ -16,7 +16,7 @@ from http import HTTPStatus
 from database.database import SessionLocal
 from database.database import engine
 from database.models import models
-from routers import organizations
+from routers import organizations_router
 from routers import utils as RouterUtils
 
 # Logger
@@ -64,7 +64,7 @@ app = FastAPI(
 )
 
 # Load Routers
-app.include_router(organizations.router)
+app.include_router(organizations_router.router)
 
 
 # Dependency

@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 12:00:16
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-18 11:42:01
+# @Last Modified time: 2022-10-20 10:01:16
 
 # general imports
 import logging
@@ -25,7 +25,7 @@ def create_time_period(db: Session,
         db.add(time_period)
         db.commit()
         db.refresh(time_period)
-        logger.info(f"Created a Time Period: {time_period.as_dict()}")
+        logger.info(f"Time Period created: {time_period.as_dict()}")
         return time_period
 
     except Exception as e:
@@ -69,7 +69,7 @@ def create_organization(db: Session,
         db.add(created_organization)
         db.commit()
         db.refresh(created_organization)
-        logger.info(f"Created an organization: {created_organization.as_dict()}")
+        logger.info(f"Organization created: {created_organization.as_dict()}")
         return created_organization
 
     except Exception as e:
@@ -111,3 +111,28 @@ def get_organization_by_id(db: Session, id: int):
         )
 
     return organization_schema
+
+
+def get_all_organizations(db: Session):
+    organizations = db\
+        .query(models.Organization)\
+        .all()
+
+    if len(organizations) == 0:
+        return []
+
+    organizations_standardized = []
+    for organization in organizations:
+        organization_schema = tmf632_party_mgmt.Organization\
+            .from_orm(organization)
+
+        # Add info about the existDuring, if needed
+        if organization.existsDuring:
+            organization_schema.existsDuring = get_time_period_by_id(
+                db=db,
+                id=organization.existsDuring
+            )
+
+        organizations_standardized.append(organization_schema)
+
+    return organizations_standardized
