@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 21:13:44
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-20 11:39:10
+# @Last Modified time: 2022-10-21 16:53:56
 
 # general imports
 import pytest
@@ -35,9 +35,23 @@ def test_correct_organization_post():
             "existsDuring": {
                 "startDateTime": "2015-10-22T08:31:52.026Z"
             },
-            "status": "validated"
+            "status": "validated",
+            "partyCharacteristic": [
+                {
+                    "name": "ci_cd_agent_url",
+                    "valueType": "URL",
+                    "value": "http://192.168.1.200:8080",
+                },
+                {
+                    "name": "ci_cd_agent_username",
+                    "valueType": "str",
+                    "value": "admin",
+                }
+            ],
         }
     )
+
+    print(response.json())
     assert response.status_code == 201
     assert response.json()['name'] == "ITAv's Testbed"
     assert response.json()['tradingName'] == "ITAv"
@@ -47,6 +61,18 @@ def test_correct_organization_post():
     assert response.json()['status'] == "validated"
     assert "2015-10-22T08:31:52.026"\
         in response.json()['existsDuring']["startDateTime"]
+    assert response.json()['partyCharacteristic'][0]["name"]\
+        == "ci_cd_agent_url"
+    assert response.json()['partyCharacteristic'][0]["valueType"]\
+        == "URL"
+    assert response.json()['partyCharacteristic'][0]["value"]\
+        == "http://192.168.1.200:8080"
+    assert response.json()['partyCharacteristic'][1]["name"]\
+        == "ci_cd_agent_username"
+    assert response.json()['partyCharacteristic'][1]["valueType"]\
+        == "str"
+    assert response.json()['partyCharacteristic'][1]["value"]\
+        == "admin"
 
 
 def test_incorrect_organization_post():

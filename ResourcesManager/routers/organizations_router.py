@@ -3,7 +3,7 @@
 # @Email:  rdireito@av.it.pt
 # @Copyright: Insituto de Telecomunicações - Aveiro, Aveiro, Portugal
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-21 11:50:56
+# @Last Modified time: 2022-10-21 16:59:02
 
 # generic imports
 from sqlalchemy.orm import Session
@@ -118,6 +118,7 @@ async def get_organization(
 
         # Parse to dict
         encoded_organizations = jsonable_encoder(organizations)
+
         # Apply 'fields' filter
         encoded_organizations = [
             filter_organization_fields(fields, encoded_organization)
