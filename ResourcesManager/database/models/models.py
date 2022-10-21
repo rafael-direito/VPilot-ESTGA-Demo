@@ -2,9 +2,10 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 11:38:27
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-21 16:14:28
+# @Last Modified time: 2022-10-21 17:53:38
 
 # generic imports
+from email.policy import default
 from sqlalchemy import Boolean, Column, ForeignKey, String, DateTime
 from sqlalchemy import Integer
 
@@ -17,6 +18,7 @@ class TimePeriod(Base):
     id = Column(Integer, primary_key=True, index=True)
     startDateTime = Column(DateTime)
     endDateTime = Column(DateTime)
+    deleted = Column(Boolean, default=False)
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
@@ -40,6 +42,7 @@ class Organization(Base):
     _baseType = Column(String)
     _schemaLocation = Column(String)
     _type = Column(String)
+    deleted = Column(Boolean, default=False)
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
@@ -62,6 +65,7 @@ class Characteristic(Base):
     _baseType = Column(String)
     _schemaLocation = Column(String)
     _type = Column(String)
+    deleted = Column(Boolean, default=False)
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}

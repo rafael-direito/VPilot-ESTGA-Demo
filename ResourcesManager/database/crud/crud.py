@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 12:00:16
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-21 16:58:40
+# @Last Modified time: 2022-10-21 17:57:52
 
 # general imports
 import logging
@@ -120,7 +120,7 @@ def create_organization(db: Session,
 
         # Rollback everything we did
         if db_organization_id:
-            delete_organization(db, db_organization_id)
+            permanentely_delete_organization(db, db_organization_id)
         else:
             if db_time_period_id:
                 delete_time_period(db, db_time_period_id)
@@ -165,6 +165,7 @@ def get_organization_by_id(db: Session, id: int):
     organization = db\
         .query(models.Organization)\
         .filter(models.Organization.id == id)\
+        .filter(models.Organization.deleted == bool(False))\
         .first()
 
     if not organization:
@@ -193,6 +194,7 @@ def get_all_organizations(db: Session, filters: dict = {}):
 
     organizations = db\
         .query(models.Organization)\
+        .filter(models.Organization.deleted == bool(False))\
         .filter_by(**filters)\
         .all()
 
@@ -222,42 +224,108 @@ def get_all_organizations(db: Session, filters: dict = {}):
     return organizations_standardized
 
 
-def delete_time_period(db: Session, time_period_id: int):
+def permanentely_delete_time_period(db: Session, time_period_id: int):
     return db\
         .query(models.TimePeriod)\
         .filter(models.TimePeriod.id == time_period_id)\
+        .filter(models.TimePeriod.deleted == bool(False))\
         .delete()
 
 
-def delete_party_characteristic_by_id(db: Session, characteristic_id: int):
+def permanentely_delete_party_characteristic_by_id(db: Session, characteristic_id: int):
     return db\
         .query(models.Characteristic)\
         .filter(models.Characteristic.id == characteristic_id)\
         .delete()
 
 
-def delete_party_characteristic_by_organization_id(
+def permanentely_delete_party_characteristic_by_organization_id(
     db: Session,
     organization_id: int
 ):
     return db\
         .query(models.Characteristic)\
         .filter(models.Characteristic.organization == organization_id)\
+        .filter(models.Characteristic.deleted == bool(False))\
         .delete()
 
 
-def delete_organization(db: Session, organization_id: int):
+def delete_time_period(db: Session, time_period_id: int):
+    time_period = db\
+        .query(models.TimePeriod)\
+        .filter(models.TimePeriod.id == time_period_id)\
+        .filter(models.TimePeriod.deleted == bool(False))
+
+    if time_period:
+        time_period.delete = True
+        db.commit()
+
+
+def delete_party_characteristic_by_id(db: Session, characteristic_id: int):
+    party_characteristic = db\
+        .query(models.Characteristic)\
+        .filter(models.Characteristic.id == characteristic_id)
+
+    if party_characteristic :
+        party_characteristic.delete = True
+        db.commit
+
+
+def delete_party_characteristic_by_organization_id(
+    db: Session,
+    organization_id: int
+):
+    party_characteristic = db\
+        .query(models.Characteristic)\
+        .filter(models.Characteristic.organization == organization_id)\
+        .filter(models.Characteristic.deleted == bool(False))
+        
+    if party_characteristic :
+        party_characteristic.delete = True
+        db.commit
+
+
+def permanentely_delete_organization(db: Session, organization_id: int):
 
     db_organization = get_organization_by_id(db, organization_id)
 
     # Delete Time Period
-    delete_time_period(db, db_organization.id)
+    permanentely_delete_time_period(db, db_organization.id)
 
     # Delete partyCharacteristics
-    delete_party_characteristic_by_organization_id(db_organization.id)
+    permanentely_delete_party_characteristic_by_organization_id(
+        db,
+        db_organization.id
+    )
 
     # Finally, delete the organization
     db\
         .query(models.Organization)\
         .filter(models.Organization.id == organization_id)\
         .delete()
+
+
+def delete_organization(db: Session, organization_id: int):
+
+    schema_organization = get_organization_by_id(db, organization_id)
+
+    if schema_organization:
+
+        # Delete Time Period
+        delete_time_period(db, schema_organization.id)
+
+        # Delete partyCharacteristics
+        delete_party_characteristic_by_organization_id(
+            db,
+            schema_organization.id
+        )
+
+        # Finally, delete the organization
+        db_organization = db\
+            .query(models.Organization)\
+            .filter(models.Organization.id == schema_organization.id)\
+            .first()
+
+        db_organization.deleted = True
+
+        db.commit()
