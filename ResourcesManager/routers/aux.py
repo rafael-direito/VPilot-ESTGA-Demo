@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-20 18:16:45
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-20 22:53:01
+# @Last Modified time: 2022-10-21 09:47:00
 
 from typing import Optional
 from fastapi import Query
@@ -86,3 +86,13 @@ class GetOrganizationFilters:
         self.relatedParty = relatedParty
         self.status = status
         self.taxExemptionCertificate = taxExemptionCertificate
+
+
+def filter_organization_fields(allowed_fields, organization):
+    if not allowed_fields:
+        return organization
+
+    for key in set(organization.keys()).difference(set(allowed_fields)):
+        del organization[key]
+
+    return organization
