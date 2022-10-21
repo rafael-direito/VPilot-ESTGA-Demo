@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 21:13:44
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-20 11:52:58
+# @Last Modified time: 2022-10-21 11:50:37
 
 # general imports
 import pytest
@@ -141,3 +141,90 @@ def test_all_fields_in_organizations_get():
     assert response.json()[0]['partyCharacteristic'] == []
     assert response.json()[0]['relatedParty'] == []
     assert response.json()[0]['taxExemptionCertificate'] == []
+
+
+def test_get_filtered_organizations():
+
+    # Prepare Test
+    database = next(override_get_db())
+
+    organization1 = TMF632Schemas.OrganizationCreate(
+        tradingName="XXX",
+        name="XXX's Testbed",
+        organizationType="Testbed"
+    )
+    organization2 = TMF632Schemas.OrganizationCreate(
+        tradingName="XXX",
+        name="XXX's Testbed2",
+        organizationType="Testbed2"
+    )
+    organization3 = TMF632Schemas.OrganizationCreate(
+        tradingName="YYY",
+        name="YYY's Testbed",
+        organizationType="Testbed"
+    )
+    organization4 = TMF632Schemas.OrganizationCreate(
+        tradingName="YYY",
+        name="YYY's Testbed2",
+        organizationType="Testbed2"
+    )
+
+    crud.create_organization(
+        db=database,
+        organization=organization1
+    )
+    crud.create_organization(
+        db=database,
+        organization=organization2
+    )
+    crud.create_organization(
+        db=database,
+        organization=organization3
+    )
+    crud.create_organization(
+        db=database,
+        organization=organization4
+    )
+
+    response_organizations_1 = test_client.get(
+        "/organization?tradingName=YYY"
+    )
+
+    response_organizations_2 = test_client.get(
+        "/organization?organizationType=Testbed2"
+    )
+
+    response_organizations_3 = test_client.get(
+        "/organization?jibberish=xxx&jjibberish2=yyy"
+    )
+
+    # Test
+
+    assert response_organizations_1.status_code == 200
+    assert len(response_organizations_1.json()) == 2
+    assert response_organizations_1.json()[0]["tradingName"] == "YYY"
+    assert response_organizations_1.json()[1]["tradingName"] == "YYY"
+    assert response_organizations_1.json()[0]["name"] == "YYY's Testbed"
+    assert response_organizations_1.json()[1]["name"] == "YYY's Testbed2"
+
+    assert response_organizations_2.status_code == 200
+    assert len(response_organizations_2.json()) == 2
+    assert response_organizations_2.json()[0]["organizationType"] == "Testbed2"
+    assert response_organizations_2.json()[1]["organizationType"] == "Testbed2"
+    assert response_organizations_2.json()[0]["tradingName"] == "XXX"
+    assert response_organizations_2.json()[1]["tradingName"] == "YYY"
+
+    assert response_organizations_3.status_code == 200
+    assert len(response_organizations_3.json()) == 4
+    assert response_organizations_3.json()[0]["tradingName"] == "XXX"
+    assert response_organizations_3.json()[0]["name"] == "XXX's Testbed"
+    assert response_organizations_3.json()[0]["organizationType"] == "Testbed"
+    assert response_organizations_3.json()[1]["tradingName"] == "XXX"
+    assert response_organizations_3.json()[1]["name"] == "XXX's Testbed2"
+    assert response_organizations_3.json()[1]["organizationType"] == "Testbed2"
+    assert response_organizations_3.json()[2]["tradingName"] == "YYY"
+    assert response_organizations_3.json()[2]["name"] == "YYY's Testbed"
+    assert response_organizations_3.json()[2]["organizationType"] == "Testbed"
+    assert response_organizations_3.json()[3]["tradingName"] == "YYY"
+    assert response_organizations_3.json()[3]["name"] == "YYY's Testbed2"
+    assert response_organizations_3.json()[3]["organizationType"] == "Testbed2"

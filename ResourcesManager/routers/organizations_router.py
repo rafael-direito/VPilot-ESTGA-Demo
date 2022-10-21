@@ -3,11 +3,11 @@
 # @Email:  rdireito@av.it.pt
 # @Copyright: Insituto de Telecomunicações - Aveiro, Aveiro, Portugal
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-21 09:56:33
+# @Last Modified time: 2022-10-21 11:50:56
 
 # generic imports
 from sqlalchemy.orm import Session
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Query
 from database.crud import crud
 from http import HTTPStatus
 from fastapi.encoders import jsonable_encoder
@@ -20,6 +20,7 @@ import schemas.tmf632_party_mgmt as TMF632Schemas
 import main
 from routers.aux import GetOrganizationFilters
 from routers.aux import filter_organization_fields
+from routers.aux import parse_organization_query_filters
 
 router = APIRouter()
 
@@ -87,7 +88,6 @@ async def create_organization(
     response_model=list[TMF632Schemas.Organization],
 )
 async def get_organization(
-    request: Request,
     id: Optional[int] = None,
     fields: Optional[str] = Query(
         default=None,
@@ -98,19 +98,21 @@ async def get_organization(
     filter: GetOrganizationFilters = Depends(),
     db: Session = Depends(get_db)
 ):
-
     try:
         # Parse all query parameters
         fields = fields.split(",") if fields else None
+        filter_dict = parse_organization_query_filters(filter)
 
         # Operations for when the client requests a specific organization
+        # These operations ignore all query filters, since the organization is
+        # already 'filtered' using its id
         if id:
             organizations = [crud.get_organization_by_id(db, id)]
             if not organizations[0]:
                 organizations[0] = {}
         # Operations for when the client requests all organization
         else:
-            organizations = crud.get_all_organizations(db)
+            organizations = crud.get_all_organizations(db, filter_dict)
 
         # General workflow for all requests
 
@@ -123,6 +125,7 @@ async def get_organization(
             in encoded_organizations
         ]
 
+        # Response
         return Utils.create_http_response(
                 http_status=HTTPStatus.OK,
                 content=encoded_organizations[0]

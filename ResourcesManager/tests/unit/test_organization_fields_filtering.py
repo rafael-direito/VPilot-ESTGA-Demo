@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-21 09:58:55
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-21 10:06:57
+# @Last Modified time: 2022-10-21 10:44:35
 
 # general imports
 import pytest
@@ -23,7 +23,7 @@ def test_db():
     Base.metadata.drop_all(bind=engine)
 
 
-def test_organization_fields_filtering():
+def test_query_filtering_parsing():
 
     # Prepare Test
 

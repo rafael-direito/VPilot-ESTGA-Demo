@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 21:13:44
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-20 11:51:14
+# @Last Modified time: 2022-10-21 11:50:46
 
 # general imports
 import pytest
@@ -14,6 +14,8 @@ import schemas.tmf632_party_mgmt as TMF632Schemas
 from tests.configure_test_db import override_get_db
 from tests.configure_test_db import engine
 from database.database import Base
+from routers.aux import GetOrganizationFilters
+from routers.aux import parse_organization_query_filters
 
 
 # Create the DB before each test and delete it afterwards
@@ -128,3 +130,78 @@ def test_get_almost_empty_organizations_from_database():
     assert all_organizations[0].partyCharacteristic == []
     assert all_organizations[0].relatedParty == []
     assert all_organizations[0].taxExemptionCertificate == []
+
+
+def test_get_filtered_organizations_from_database():
+
+    # Prepare Test
+    database = next(override_get_db())
+
+    organization1 = TMF632Schemas.OrganizationCreate(
+        tradingName="XXX",
+        name="XXX's Testbed",
+        organizationType="Testbed"
+    )
+    organization2 = TMF632Schemas.OrganizationCreate(
+        tradingName="XXX",
+        name="XXX's Testbed2",
+        organizationType="Testbed2"
+    )
+    organization3 = TMF632Schemas.OrganizationCreate(
+        tradingName="YYY",
+        name="YYY's Testbed",
+        organizationType="Testbed"
+    )
+    organization4 = TMF632Schemas.OrganizationCreate(
+        tradingName="YYY",
+        name="YYY's Testbed2",
+        organizationType="Testbed2"
+    )
+
+    crud.create_organization(
+        db=database,
+        organization=organization1
+    )
+    crud.create_organization(
+        db=database,
+        organization=organization2
+    )
+    crud.create_organization(
+        db=database,
+        organization=organization3
+    )
+    crud.create_organization(
+        db=database,
+        organization=organization4
+    )
+
+    organization_filters_1 = GetOrganizationFilters(
+        tradingName="YYY",
+    )
+    organization_filters_2 = GetOrganizationFilters(
+        organizationType="Testbed2",
+    )
+
+    filtered_organizations_1 = crud.get_all_organizations(
+        database,
+        parse_organization_query_filters(organization_filters_1)
+    )
+
+    filtered_organizations_2 = crud.get_all_organizations(
+        database,
+        parse_organization_query_filters(organization_filters_2)
+    )
+
+    # Test
+
+    assert len(filtered_organizations_1) == 2
+    assert filtered_organizations_1[0].tradingName == "YYY"
+    assert filtered_organizations_1[1].tradingName == "YYY"
+    assert filtered_organizations_1[0].name == "YYY's Testbed"
+    assert filtered_organizations_1[1].name == "YYY's Testbed2"
+
+    assert len(filtered_organizations_2) == 2
+    assert filtered_organizations_2[0].organizationType == "Testbed2"
+    assert filtered_organizations_2[1].organizationType == "Testbed2"
+    assert filtered_organizations_2[0].tradingName == "XXX"
+    assert filtered_organizations_2[1].tradingName == "YYY"

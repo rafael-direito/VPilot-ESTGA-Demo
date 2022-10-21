@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 12:00:16
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-20 23:38:39
+# @Last Modified time: 2022-10-21 11:37:19
 
 # general imports
 import logging
@@ -113,9 +113,11 @@ def get_organization_by_id(db: Session, id: int):
     return organization_schema
 
 
-def get_all_organizations(db: Session):
+def get_all_organizations(db: Session, filters: dict = {}):
+
     organizations = db\
         .query(models.Organization)\
+        .filter_by(**filters)\
         .all()
 
     if len(organizations) == 0:

@@ -2,10 +2,12 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-20 18:16:45
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-21 09:47:00
+# @Last Modified time: 2022-10-21 11:51:07
 
 from typing import Optional
 from fastapi import Query
+from database.models.models import Organization
+import fastapi
 
 
 class GetOrganizationFilters:
@@ -96,3 +98,14 @@ def filter_organization_fields(allowed_fields, organization):
         del organization[key]
 
     return organization
+
+
+def parse_organization_query_filters(filter: GetOrganizationFilters):
+    return {
+        filter_key: filter_value
+        for filter_key, filter_value in filter.__dict__.items()
+        if
+        filter_value
+        and not isinstance(filter_value, fastapi.params.Query)
+        and filter_key in Organization.__table__.columns.keys()
+    }
