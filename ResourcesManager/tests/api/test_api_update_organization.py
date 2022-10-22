@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 21:13:44
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-22 14:36:14
+# @Last Modified time: 2022-10-22 14:39:20
 
 # general imports
 import pytest
@@ -14,6 +14,7 @@ from database.database import Base
 from tests.configure_test_db import override_get_db
 from schemas import tmf632_party_mgmt as TMF632Schemas
 from database.crud import crud
+
 
 # Create the DB before each test and delete it afterwards
 @pytest.fixture(autouse=True)
