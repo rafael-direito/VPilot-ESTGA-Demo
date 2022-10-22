@@ -2,10 +2,9 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 11:38:27
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-21 17:53:38
+# @Last Modified time: 2022-10-22 11:30:53
 
 # generic imports
-from email.policy import default
 from sqlalchemy import Boolean, Column, ForeignKey, String, DateTime
 from sqlalchemy import Integer
 

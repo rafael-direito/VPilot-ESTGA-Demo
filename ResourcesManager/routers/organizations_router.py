@@ -3,7 +3,7 @@
 # @Email:  rdireito@av.it.pt
 # @Copyright: Insituto de Telecomunicações - Aveiro, Aveiro, Portugal
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-21 16:59:02
+# @Last Modified time: 2022-10-22 11:35:17
 
 # generic imports
 from sqlalchemy.orm import Session
@@ -77,14 +77,14 @@ async def create_organization(
     "/organization/",
     tags=["organization"],
     summary="List or find Organization objects",
-    description="This operation list or find Organization entities",
+    description="This operation list or find Organization entities.",
     response_model=list[TMF632Schemas.Organization],
 )
 @router.get(
     "/organization/{id}",
     tags=["organization"],
     summary="List or find Organization objects",
-    description="This operation list or find Organization entities",
+    description="This operation list or find Organization entities.",
     response_model=list[TMF632Schemas.Organization],
 )
 async def get_organization(
@@ -139,6 +139,38 @@ async def get_organization(
             http_status=HTTPStatus.INTERNAL_SERVER_ERROR,
             content=Utils.compose_error_payload(
                 code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                reason=exception.reason,
+            )
+        )
+    except Exception as exception:
+        return Utils.create_http_response(
+            http_status=HTTPStatus.INTERNAL_SERVER_ERROR,
+            content=Utils.compose_error_payload(
+                code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                reason=str(exception),
+            )
+        )
+
+
+@router.delete(
+    "/organization/{id}",
+    tags=["organization"],
+    summary="Deletes a Organization",
+    description="This operation deletes a Organization entity.",
+)
+async def delete_organization(id: Optional[int] = None,
+                              db: Session = Depends(get_db)):
+    try:
+        crud.delete_organization(db, id)
+        # Response
+        return Utils.create_http_response(
+                http_status=HTTPStatus.NO_CONTENT
+        )
+    except CRUDExceptions.EntityDoesNotExist as exception:
+        return Utils.create_http_response(
+            http_status=HTTPStatus.BAD_REQUEST,
+            content=Utils.compose_error_payload(
+                code=HTTPStatus.BAD_REQUEST,
                 reason=exception.reason,
             )
         )
