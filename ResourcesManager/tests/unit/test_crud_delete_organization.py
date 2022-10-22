@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 21:13:44
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-21 17:59:15
+# @Last Modified time: 2022-10-22 11:30:04
 
 # general imports
 import pytest
@@ -13,6 +13,7 @@ import schemas.tmf632_party_mgmt as TMF632Schemas
 from tests.configure_test_db import override_get_db
 from tests.configure_test_db import engine
 from database.database import Base
+from database.crud.exceptions import EntityDoesNotExist
 
 
 # Create the DB before each test and delete it afterwards
@@ -24,7 +25,7 @@ def test_db():
 
 
 # Tests
-def test_simple_organization_database_creation():
+def test_simple_organization_database_deletion():
 
     database = next(override_get_db())
 
@@ -51,3 +52,17 @@ def test_simple_organization_database_creation():
 
     assert db_organization1.deleted
     assert not db_organization2.deleted
+
+
+def test_unexistent_organization_deletion():
+
+    database = next(override_get_db())
+
+    with pytest.raises(EntityDoesNotExist) as exception:
+        crud.delete_organization(
+            db=database,
+            organization_id=100
+        )
+    assert "Impossible to obtain entity"\
+        and "Organization with id=100 doesn't exist"\
+        in str(exception)

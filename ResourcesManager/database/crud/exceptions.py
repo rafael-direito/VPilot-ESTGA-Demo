@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 17:35:05
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-17 19:06:16
+# @Last Modified time: 2022-10-22 11:25:04
 
 import logging
 
@@ -23,6 +23,22 @@ class ImpossibleToCreateDatabaseEntry(Exception):
         else:
             self.message = f"Impossible to create a database entry for "\
                 f"entity '{entity_type}'."
+        logger.error(f"Exception: {self.message}")
+        super().__init__(self.message)
+
+    def __str__(self):
+        return self.message
+
+
+class EntityDoesNotExist(Exception):
+    def __init__(self, entity_type, reason=None):
+        self.entity_type = entity_type
+        if reason:
+            self.reason = reason
+            self.message = f"Impossible to obtain entity ('{entity_type} ,"\
+                f"reason='{reason}')."
+        else:
+            self.message = f"Impossible to obtain entity '{entity_type}'"
         logger.error(f"Exception: {self.message}")
         super().__init__(self.message)
 

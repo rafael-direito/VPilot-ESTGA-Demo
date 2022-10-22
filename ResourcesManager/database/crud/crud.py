@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 12:00:16
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-21 17:57:52
+# @Last Modified time: 2022-10-22 11:26:52
 
 # general imports
 import logging
@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from database.models import models
 from schemas import tmf632_party_mgmt
 from database.crud.exceptions import ImpossibleToCreateDatabaseEntry
+from database.crud.exceptions import EntityDoesNotExist
 
 # Logger
 logger = logging.getLogger(__name__)
@@ -232,7 +233,10 @@ def permanentely_delete_time_period(db: Session, time_period_id: int):
         .delete()
 
 
-def permanentely_delete_party_characteristic_by_id(db: Session, characteristic_id: int):
+def permanentely_delete_party_characteristic_by_id(
+    db: Session,
+    characteristic_id: int
+):
     return db\
         .query(models.Characteristic)\
         .filter(models.Characteristic.id == characteristic_id)\
@@ -266,7 +270,7 @@ def delete_party_characteristic_by_id(db: Session, characteristic_id: int):
         .query(models.Characteristic)\
         .filter(models.Characteristic.id == characteristic_id)
 
-    if party_characteristic :
+    if party_characteristic:
         party_characteristic.delete = True
         db.commit
 
@@ -279,8 +283,8 @@ def delete_party_characteristic_by_organization_id(
         .query(models.Characteristic)\
         .filter(models.Characteristic.organization == organization_id)\
         .filter(models.Characteristic.deleted == bool(False))
-        
-    if party_characteristic :
+
+    if party_characteristic:
         party_characteristic.delete = True
         db.commit
 
@@ -309,23 +313,27 @@ def delete_organization(db: Session, organization_id: int):
 
     schema_organization = get_organization_by_id(db, organization_id)
 
-    if schema_organization:
-
-        # Delete Time Period
-        delete_time_period(db, schema_organization.id)
-
-        # Delete partyCharacteristics
-        delete_party_characteristic_by_organization_id(
-            db,
-            schema_organization.id
+    if not schema_organization:
+        raise EntityDoesNotExist(
+            entity_type="Organization",
+            reason=f"Organization with id={organization_id} doesn't exist"
         )
 
-        # Finally, delete the organization
-        db_organization = db\
-            .query(models.Organization)\
-            .filter(models.Organization.id == schema_organization.id)\
-            .first()
+    # Delete Time Period
+    delete_time_period(db, schema_organization.id)
 
-        db_organization.deleted = True
+    # Delete partyCharacteristics
+    delete_party_characteristic_by_organization_id(
+        db,
+        schema_organization.id
+    )
 
-        db.commit()
+    # Finally, delete the organization
+    db_organization = db\
+        .query(models.Organization)\
+        .filter(models.Organization.id == schema_organization.id)\
+        .first()
+
+    db_organization.deleted = True
+
+    db.commit()
