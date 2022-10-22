@@ -3,7 +3,7 @@
 # @Email:  rdireito@av.it.pt
 # @Copyright: Insituto de Telecomunicações - Aveiro, Aveiro, Portugal
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-22 11:35:17
+# @Last Modified time: 2022-10-22 14:33:11
 
 # generic imports
 from sqlalchemy.orm import Session
@@ -171,6 +171,55 @@ async def delete_organization(id: Optional[int] = None,
             http_status=HTTPStatus.BAD_REQUEST,
             content=Utils.compose_error_payload(
                 code=HTTPStatus.BAD_REQUEST,
+                reason=exception.reason,
+            )
+        )
+    except Exception as exception:
+        return Utils.create_http_response(
+            http_status=HTTPStatus.INTERNAL_SERVER_ERROR,
+            content=Utils.compose_error_payload(
+                code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                reason=str(exception),
+            )
+        )
+
+
+@router.patch(
+    "/organization/{id}",
+    tags=["organization"],
+    summary="Updates partially a Organization",
+    description="This operation updates partially a Organization entity.",
+)
+async def update_organization(id: int,
+                              organization: TMF632Schemas.OrganizationCreate,
+                              db: Session = Depends(get_db)):
+    try:
+        crud.update_organization(db, id, organization)
+        updated_organization = crud.get_organization_by_id(db, id)
+
+        # Parse to dict
+        encoded_organization = jsonable_encoder(updated_organization)
+
+        # Response
+        return Utils.create_http_response(
+                http_status=HTTPStatus.OK,
+                content=encoded_organization
+        )
+    except CRUDExceptions.EntityDoesNotExist as exception:
+        print("--")
+        return Utils.create_http_response(
+            http_status=HTTPStatus.BAD_REQUEST,
+            content=Utils.compose_error_payload(
+                code=HTTPStatus.BAD_REQUEST,
+                reason=exception.reason,
+            )
+        )
+    except CRUDExceptions.ImpossibleToCreateDatabaseEntry as exception:
+        print("-----")
+        return Utils.create_http_response(
+            http_status=HTTPStatus.INTERNAL_SERVER_ERROR,
+            content=Utils.compose_error_payload(
+                code=HTTPStatus.INTERNAL_SERVER_ERROR,
                 reason=exception.reason,
             )
         )

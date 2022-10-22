@@ -2,11 +2,10 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 21:13:44
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-22 12:22:56
+# @Last Modified time: 2022-10-22 14:37:36
 
 # general imports
 import pytest
-from pydantic import ValidationError
 import datetime
 
 # custom imports
@@ -15,6 +14,7 @@ import schemas.tmf632_party_mgmt as TMF632Schemas
 from tests.configure_test_db import override_get_db
 from tests.configure_test_db import engine
 from database.database import Base
+from database.crud.exceptions import EntityDoesNotExist
 
 
 # Create the DB before each test and delete it afterwards
@@ -60,19 +60,14 @@ def test_complex_organization_database_update():
         organization=organization
     )
 
-    db_organization_schema = crud.get_organization_by_id(
-        db=database,
-        id=db_organization.id
-    )
-
     # Prepare Update
-    db_organization_schema.tradingName = "XXX"
-    db_organization_schema.name = "XXX's Testbed"
-    db_organization_schema.existsDuring = TMF632Schemas.TimePeriod(
+    organization.tradingName = "XXX"
+    organization.name = "XXX's Testbed"
+    organization.existsDuring = TMF632Schemas.TimePeriod(
         startDateTime="2020-10-22T08:31:52.026Z",
         endDateTime="2021-10-22T08:31:52.026Z",
     )
-    db_organization_schema.partyCharacteristic = [
+    organization.partyCharacteristic = [
         TMF632Schemas.Characteristic(
                 name="test_name",
                 value="test_value",
@@ -83,7 +78,8 @@ def test_complex_organization_database_update():
     # Update Organization
     db_updated_organization = crud.update_organization(
         db=database,
-        organization=db_organization_schema
+        organization_id=db_organization.id,
+        organization=organization
     )
 
     updated_organization = crud.get_organization_by_id(
@@ -117,3 +113,19 @@ def test_complex_organization_database_update():
     assert db_characteristics[0].name == "test_name"
     assert db_characteristics[0].value == "test_value"
     assert db_characteristics[0].valueType == "test_value_type"
+
+
+def test_nonexistent_organization_database_update():
+
+    database = next(override_get_db())
+
+    with pytest.raises(EntityDoesNotExist) as exception:
+        crud.update_organization(
+            db=database,
+            organization_id=999,
+            organization=None
+        )
+
+    assert "Impossible to obtain entity"\
+        and "Organization with id=999 doesn't exist"\
+        in str(exception)

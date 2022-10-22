@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 12:00:16
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-22 12:32:08
+# @Last Modified time: 2022-10-22 14:35:06
 
 # general imports
 import logging
@@ -342,7 +342,8 @@ def delete_organization(db: Session, organization_id: int):
 
 
 def update_organization(db: Session,
-                        organization: tmf632_party_mgmt.Organization):
+                        organization_id: int,
+                        organization: tmf632_party_mgmt.OrganizationCreate):
 
     db_time_period_id = None
     db_organization_id = None
@@ -350,7 +351,7 @@ def update_organization(db: Session,
 
     try:
         # Check if organization payload contains the organization's id
-        if not organization.id:
+        if not organization_id:
             raise EntityDoesNotExist(
                 entity_type="Organization",
                 reason="Organization had no id"
@@ -359,16 +360,16 @@ def update_organization(db: Session,
         # Get current organization
         db_organization = db\
             .query(models.Organization)\
-            .filter(models.Organization.id == organization.id)\
+            .filter(models.Organization.id == organization_id)\
             .first()
 
         if not db_organization:
             raise EntityDoesNotExist(
                 entity_type="Organization",
-                reason=f"Organization with id={organization.id} doesn't exist"
+                reason=f"Organization with id={organization_id} doesn't exist"
             )
 
-        db_organization_id = db_organization.id
+        db_organization_id = organization_id
         db_time_period_id = None
         old_time_period = None
         # Try to create a new TimePeriod DB Entry
@@ -391,7 +392,7 @@ def update_organization(db: Session,
             old_party_characteristics = \
                 get_party_characteristics_by_organization_id(
                     db,
-                    organization.id
+                    db_organization_id
                 )
             print(old_party_characteristics)
             # Delete all old db entries
@@ -402,7 +403,7 @@ def update_organization(db: Session,
             old_party_characteristics = \
                 get_party_characteristics_by_organization_id(
                     db,
-                    organization.id
+                    db_organization_id
                 )
             print(old_party_characteristics)
             # Then, create new ones
@@ -441,6 +442,8 @@ def update_organization(db: Session,
 
         return db_organization
 
+    except EntityDoesNotExist as e:
+        raise e
     except Exception as e:
 
         # Rollback everything we did
