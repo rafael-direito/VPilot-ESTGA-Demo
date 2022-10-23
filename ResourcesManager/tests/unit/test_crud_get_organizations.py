@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 21:13:44
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-21 11:50:46
+# @Last Modified time: 2022-10-23 18:01:59
 
 # general imports
 import pytest
@@ -93,14 +93,23 @@ def test_get_organizations_from_database_with_starts_during():
 
     all_organizations = crud.get_all_organizations(database)
 
+    all_exists_during = [
+        crud.get_time_period_by_id(
+            db=database,
+            id=org.existsDuring
+        )
+        for org
+        in all_organizations
+    ]
+
     startDateTime = datetime.datetime(2015, 10, 22, 8, 31, 52, 26000)
     endDateTime = datetime.datetime(2016, 10, 22, 8, 31, 52, 26000)
 
     assert len(all_organizations) == 2
-    assert all_organizations[0].existsDuring\
-        .startDateTime.replace(tzinfo=None) == startDateTime
-    assert all_organizations[0].existsDuring\
-        .endDateTime.replace(tzinfo=None) == endDateTime
+    assert all_exists_during[0].startDateTime\
+        .replace(tzinfo=None) == startDateTime
+    assert all_exists_during[0].endDateTime\
+        .replace(tzinfo=None) == endDateTime
     assert all_organizations[1].existsDuring is None
 
 
@@ -120,16 +129,25 @@ def test_get_almost_empty_organizations_from_database():
     # Test
 
     all_organizations = crud.get_all_organizations(database)
+
+    all_party_characteristics = [
+        crud.get_party_characteristics_by_organization_id(
+            db=database,
+            organization_id=org.id
+        )
+        for org
+        in all_organizations
+    ]
+
     assert len(all_organizations) == 1
-    assert all_organizations[0].contactMedium == []
-    assert all_organizations[0].creditRating == []
-    assert all_organizations[0].externalReference == []
-    assert all_organizations[0].organizationChildRelationship == []
-    assert all_organizations[0].organizationIdentification == []
-    assert all_organizations[0].otherName == []
-    assert all_organizations[0].partyCharacteristic == []
-    assert all_organizations[0].relatedParty == []
-    assert all_organizations[0].taxExemptionCertificate == []
+    assert all_organizations[0].tradingName == "XXX"
+    assert all_organizations[0].href is None
+    assert not all_organizations[0].isHeadOffice
+    assert not all_organizations[0].isLegalEntity == bool(False)
+    assert all_organizations[0].name is None
+    assert all_organizations[0].nameType is None
+    assert all_organizations[0].existsDuring is None
+    assert all_party_characteristics[0] == []
 
 
 def test_get_filtered_organizations_from_database():

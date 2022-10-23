@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 21:13:44
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-21 09:46:45
+# @Last Modified time: 2022-10-23 18:06:07
 
 # general imports
 import pytest
@@ -136,45 +136,3 @@ def test_get_filtered_organization():
     assert response6.json().get("tradingName") == "XXX"
     assert response6.json().get("organizationType") == "Testbed"
     assert response6.json().get("status") == "validated"
-
-
-
-def test_filters_while_requesting_organizations():
-
-    # Test
-
-    # TODO: Implement later, when the full business logic has been implemented
-
-    # response1 = test_client.get(
-    #     "/organization?taxExemptionCertificate.id=1"
-    # )
-    # response2 = test_client.get(
-    #     "/organization?taxExemptionCertificate.id=1&name=XXX"
-    # )
-    # response3 = test_client.get(
-    #     "/organization/1?taxExemptionCertificate.id=1"
-    # )
-    # response4 = test_client.get(
-    #     "/organization/1?taxExemptionCertificate.id=1&name=XXX"
-    # )
-    # response5 = test_client.get(
-    #     "/organization/?jibberish=1"
-    # )
-    # response6 = test_client.get(
-    #     "/organization/1?jibberish=1"
-    # )
-    # response7 = test_client.get(
-    #     "/organization?taxExemptionCertificate.id=1&name=XXX&jibberish=a"
-    # )
-    # response8 = test_client.get(
-    #     "/organization/1?taxExemptionCertificate.id=1&name=XXX&jibberish=a"
-    # )
-    # assert response1.status_code == 200
-    # assert response2.status_code == 200
-    # assert response3.status_code == 200
-    # assert response4.status_code == 200
-    # assert response5.status_code == 400
-    # assert "Error" in response5.json()['reason']
-    # assert "string does not match regex" in response5.json()['reason']
-
-    return

@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 12:00:16
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-22 14:35:06
+# @Last Modified time: 2022-10-23 17:52:16
 
 # general imports
 import logging
@@ -171,26 +171,7 @@ def get_organization_by_id(db: Session, id: int):
         .filter(models.Organization.deleted == bool(False))\
         .first()
 
-    if not organization:
-        return
-
-    organization_schema = tmf632_party_mgmt.Organization.from_orm(organization)
-
-    # Add info about the existDuring, if needed
-    if organization.existsDuring:
-        organization_schema.existsDuring = get_time_period_by_id(
-            db=db,
-            id=organization.existsDuring
-        )
-
-    # Add info about the partyCharacteristics, if needed
-    organization_schema.partyCharacteristic = \
-        get_party_characteristics_by_organization_id(
-            db,
-            organization.id
-        )
-
-    return organization_schema
+    return organization
 
 
 def get_all_organizations(db: Session, filters: dict = {}):
@@ -201,30 +182,7 @@ def get_all_organizations(db: Session, filters: dict = {}):
         .filter_by(**filters)\
         .all()
 
-    if len(organizations) == 0:
-        return []
-
-    organizations_standardized = []
-    for organization in organizations:
-        organization_schema = tmf632_party_mgmt.Organization\
-            .from_orm(organization)
-
-        # Add info about the existDuring, if needed
-        if organization.existsDuring:
-            organization_schema.existsDuring = get_time_period_by_id(
-                db=db,
-                id=organization.existsDuring
-            )
-        # Add info about the partyCharacteristics, if needed
-        organization_schema.partyCharacteristic = \
-            get_party_characteristics_by_organization_id(
-                db,
-                organization.id
-            )
-
-        organizations_standardized.append(organization_schema)
-
-    return organizations_standardized
+    return organizations
 
 
 def permanentely_delete_time_period(db: Session, time_period_id: int):

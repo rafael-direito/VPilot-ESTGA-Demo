@@ -3,7 +3,7 @@
 # @Email:  rdireito@av.it.pt
 # @Copyright: Insituto de Telecomunicações - Aveiro, Aveiro, Portugal
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-22 14:33:11
+# @Last Modified time: 2022-10-23 18:04:29
 
 # generic imports
 from sqlalchemy.orm import Session
@@ -43,16 +43,17 @@ async def create_organization(
     db: Session = Depends(get_db)
 ):
     try:
-        created_organization = crud.create_organization(db, organization)
+        organization = crud.create_organization(db, organization)
+
+        # Parse Organization to TM632 Organization
+        tmf632_organization = Utils.organization_to_organization_schema(
+            db=db,
+            organization=organization
+        )
 
         return Utils.create_http_response(
             http_status=HTTPStatus.CREATED,
-            content=jsonable_encoder(
-                crud.get_organization_by_id(
-                    db=db,
-                    id=created_organization.id
-                )
-            )
+            content=jsonable_encoder(tmf632_organization)
         )
 
     except CRUDExceptions.ImpossibleToCreateDatabaseEntry as exception:
@@ -115,15 +116,26 @@ async def get_organization(
             organizations = crud.get_all_organizations(db, filter_dict)
 
         # General workflow for all requests
+        # Parse Organization to TM632 Organization
+        tmf632_organizations = [
+            Utils.organization_to_organization_schema(
+                db=db,
+                organization=organization
+            )
+            if organization != {}
+            else {}
+            for organization
+            in organizations
+        ]
 
-        # Parse to dict
-        encoded_organizations = jsonable_encoder(organizations)
-
-        # Apply 'fields' filter
+        # Apply 'fields' filter and encode/parse to dict
         encoded_organizations = [
-            filter_organization_fields(fields, encoded_organization)
+            filter_organization_fields(
+                fields,
+                jsonable_encoder(encoded_organization)
+            )
             for encoded_organization
-            in encoded_organizations
+            in tmf632_organizations
         ]
 
         # Response
@@ -197,8 +209,14 @@ async def update_organization(id: int,
         crud.update_organization(db, id, organization)
         updated_organization = crud.get_organization_by_id(db, id)
 
+        # Parse Organization to TM632 Organization
+        tmf632_organization = Utils.organization_to_organization_schema(
+            db=db,
+            organization=updated_organization
+        )
+
         # Parse to dict
-        encoded_organization = jsonable_encoder(updated_organization)
+        encoded_organization = jsonable_encoder(tmf632_organization)
 
         # Response
         return Utils.create_http_response(
@@ -206,7 +224,6 @@ async def update_organization(id: int,
                 content=encoded_organization
         )
     except CRUDExceptions.EntityDoesNotExist as exception:
-        print("--")
         return Utils.create_http_response(
             http_status=HTTPStatus.BAD_REQUEST,
             content=Utils.compose_error_payload(
@@ -215,7 +232,6 @@ async def update_organization(id: int,
             )
         )
     except CRUDExceptions.ImpossibleToCreateDatabaseEntry as exception:
-        print("-----")
         return Utils.create_http_response(
             http_status=HTTPStatus.INTERNAL_SERVER_ERROR,
             content=Utils.compose_error_payload(
