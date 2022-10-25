@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 11:38:27
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-25 18:51:12
+# @Last Modified time: 2022-10-25 19:00:36
 
 # generic imports
 from sqlalchemy import Boolean, Column, ForeignKey, String, DateTime
@@ -81,7 +81,8 @@ class OrganizationAuthorizedUsers(Base):
         Integer,
         ForeignKey("Organization.id"),
         nullable=False
-    )
+    ),
+    deleted = Column(Boolean, default=False)
 
     def as_dict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
