@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-24 14:17:09
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-24 21:54:29
+# @Last Modified time: 2022-10-25 14:47:48
 version: '3'
 
 volumes:
@@ -22,7 +22,7 @@ services:
   keycloak:
     image: jboss/keycloak:18.0.2 
     command:
-      - "-b 0.0.0.0 "
+      - " -b 0.0.0.0 "
     environment:
       DB_VENDOR: POSTGRES
       DB_ADDR: postgres
@@ -39,8 +39,9 @@ services:
       MY_REALM_CLIENT_SECRET: dummy_client_secret
       MY_REALM_ADMIN_SECRET: dummy_admin_secret
       MY_REALM_REDIRECT_URI: http://localhost:8000/*
-      MY_REALM_ADMIN_USERNAME: dummy_vpilot_admin
-      MY_REALM_ADMIN_PASSWORD: dummy_vpilot_password
+      REALM_ROLES: VPilot-Admin:VPilot Admin;Testbed-Admin:VPilot Testbed Admin
+      REALM_USERS: 5gasp-admin:5gasp-password:VPilot-Admin;itav:itav-password:None
+
     ports:
       - '8085:8080'
     depends_on:

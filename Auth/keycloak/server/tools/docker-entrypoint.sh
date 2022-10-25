@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-24 19:20:02
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-24 21:49:52
+# @Last Modified time: 2022-10-25 14:47:36
 #!/bin/bash
 set -eou pipefail
 
@@ -259,7 +259,9 @@ fi
 # 1st Start Keycloak #
 ######################
 
-exec /opt/jboss/keycloak/bin/standalone.sh $SYS_PROPS $@ &
+set -m
+exec nohup /opt/jboss/keycloak/bin/standalone.sh $SYS_PROPS $@ &
+
 
 
 until $(curl --output /dev/null --silent --head --fail http://localhost:8080/auth); do
@@ -272,10 +274,10 @@ cd /opt/jboss/keycloak/bin
 # Log in
 ./kcadm.sh config credentials --server http://localhost:8080/auth --realm master --user $KEYCLOAK_USER --password $KEYCLOAK_PASSWORD
 
-REALM_CREATED=true
-./kcadm.sh get realms/$MY_REALM_NAME || REALM_CREATED=false
+REALM_CREATED=0
+./kcadm.sh get realms/$MY_REALM_NAME || REALM_CREATED=1
 
-if [ "$REALM_CREATED" -eq true ]; then
+if [ "$REALM_CREATED" -eq 0 ]; then
     echo "Realm $MY_REALM_NAME already exists!"
     pid=$(ps | grep standalone.sh | awk '{print $1}')
     kill $pid
@@ -288,7 +290,6 @@ if [ "$REALM_CREATED" -eq true ]; then
     exit $?
 fi
 
-# ELSE -> Create everything
 
 # Create Realm
 ./kcadm.sh create realms -s realm=$MY_REALM_NAME -s enabled=true -o
@@ -351,24 +352,49 @@ export ADMIN_CLI_ID=$(./kcadm.sh get clients -r $MY_REALM_NAME --fields clientId
     "baseUrl": ""
   }
 EOF
-# Create Groups
-./kcadm.sh create groups -r $MY_REALM_NAME -s name=Admin
-./kcadm.sh create groups -r $MY_REALM_NAME -s name=Testbed-Admin
-# Create Admin user
-./kcadm.sh create users -r $MY_REALM_NAME -s username=$MY_REALM_NAME-admin -s enabled=true
-# Set its password
-./kcadm.sh set-password -r $MY_REALM_NAME --username $MY_REALM_ADMIN_USERNAME --new-password $MY_REALM_ADMIN_PASSWORD
-# Add 'VPilot Super Admin' role to the Admin User 
-./kcadm.sh create roles -r $MY_REALM_NAME -s name=vpilot-admin -s "description=VPilot Super Admin"
-./kcadm.sh create roles -r $MY_REALM_NAME -s name=vpilot-testbed-admin -s "description=VPilot Testbed's Admin"
-./kcadm.sh add-roles --uusername $MY_REALM_ADMIN_USERNAME --rolename vpilot-admin -r $MY_REALM_NAME
 
-pid=$(ps | grep standalone.sh | awk '{print $1}')
-kill $pid
+IFS=";"
+read -a roles_info_array <<< "$REALM_ROLES"
 
-######################
-# 2nd Start Keycloak #
-######################
+for role_info_str in "${roles_info_array[@]}"
+do
+    IFS=":"
+    read -a role_info <<< "$role_info_str"
+    role=${role_info[0]}
+    description=${role_info[1]}
 
-exec /opt/jboss/keycloak/bin/standalone.sh $SYS_PROPS $@
-exit $?
+    
+    echo "Adding role: '$role' with description '$description'..."
+    # Add role in keycloak
+    ./kcadm.sh create roles -r $MY_REALM_NAME -s name=$role -s "description=$description"
+    echo "Added role: '$role' with description '$description'."
+done
+
+IFS=";"
+read -a users_array <<< "$REALM_USERS"
+for user in "${users_array[@]}"
+do
+    IFS=":"
+    read -a user_info <<< "$user"
+
+    username=${user_info[0]}
+    password=${user_info[1]}
+    role=${user_info[2]}
+
+    echo "Adding user '$username'..."
+    ./kcadm.sh create users -r $MY_REALM_NAME -s username=$username -s enabled=true
+    ./kcadm.sh set-password -r $MY_REALM_NAME --username $username --new-password $password
+    echo "Added user '$username'."
+    if [[ $role != "None" ]]
+    then
+        echo "Adding role '$role' to user '$username'..."
+        ./kcadm.sh add-roles --uusername $username --rolename $role -r $MY_REALM_NAME
+        echo "Added role '$role' to user '$username'."
+    else
+        echo "User '$username' was added without any role."
+    fi
+done
+
+job_id=$(jobs | grep standalone.sh | awk '{print $1}' | awk '{print substr($0, 2, length($0) - 3)}')
+echo "JOB ID: $job_id"
+fg % $job_id
