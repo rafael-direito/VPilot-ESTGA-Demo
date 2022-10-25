@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 12:00:16
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-23 17:52:16
+# @Last Modified time: 2022-10-25 22:24:44
 
 # general imports
 import logging
@@ -16,6 +16,10 @@ from database.crud.exceptions import EntityDoesNotExist
 
 # Logger
 logger = logging.getLogger(__name__)
+
+#######################################
+#     Time Period CRUD Operations     #
+#######################################
 
 
 def create_time_period(db: Session,
@@ -36,6 +40,39 @@ def create_time_period(db: Session,
             reason=str(e)
         )
 
+
+def get_time_period_by_id(db: Session, id: int):
+    return tmf632_party_mgmt.TimePeriod.from_orm(
+        db
+        .query(models.TimePeriod)
+        .filter(models.TimePeriod.id == id)
+        .filter(models.TimePeriod.deleted == bool(False))
+        .first()
+    )
+
+
+def delete_time_period(db: Session, time_period_id: int):
+    time_period = db\
+        .query(models.TimePeriod)\
+        .filter(models.TimePeriod.id == time_period_id)\
+        .filter(models.TimePeriod.deleted == bool(False))
+
+    if time_period:
+        time_period.delete = True
+        db.commit()
+
+
+def permanentely_delete_time_period(db: Session, time_period_id: int):
+    return db\
+        .query(models.TimePeriod)\
+        .filter(models.TimePeriod.id == time_period_id)\
+        .filter(models.TimePeriod.deleted == bool(False))\
+        .delete()
+
+
+#######################################
+#    Characteristic CRUD Operations   #
+#######################################
 
 def create_party_characteristic(
     db: Session,
@@ -62,6 +99,178 @@ def create_party_characteristic(
             entity_data=str(db_party_characteristic),
             reason=str(e)
         )
+
+
+def get_party_characteristics_by_organization_id(
+    db: Session,
+    organization_id: int
+):
+    return [
+        tmf632_party_mgmt.Characteristic.from_orm(characteristic)
+        for characteristic
+        in db
+        .query(models.Characteristic)
+        .filter(models.Characteristic.organization == organization_id)
+        .filter(models.Characteristic.deleted == bool(False))
+        .all()
+    ]
+
+
+def permanentely_delete_party_characteristic_by_id(
+    db: Session,
+    characteristic_id: int
+):
+    return db\
+        .query(models.Characteristic)\
+        .filter(models.Characteristic.id == characteristic_id)\
+        .delete()
+
+
+def permanentely_delete_party_characteristic_by_organization_id(
+    db: Session,
+    organization_id: int
+):
+    return db\
+        .query(models.Characteristic)\
+        .filter(models.Characteristic.organization == organization_id)\
+        .delete()
+
+
+def delete_party_characteristic_by_id(db: Session, characteristic_id: int):
+    party_characteristic = db\
+        .query(models.Characteristic)\
+        .filter(models.Characteristic.id == characteristic_id)\
+        .first()
+
+    if party_characteristic:
+        party_characteristic.deleted = True
+        db.commit()
+
+
+def delete_party_characteristic_by_organization_id(
+    db: Session,
+    organization_id: int
+):
+    party_characteristics = db\
+        .query(models.Characteristic)\
+        .filter(models.Characteristic.organization == organization_id)\
+        .filter(models.Characteristic.deleted == bool(False))\
+        .all()
+
+    for party_characteristic in party_characteristics:
+        party_characteristic.deleted = True
+        db.commit()
+
+
+#######################################
+#   Authorized Users CRUD Operations  #
+#######################################
+
+
+def create_authorized_user(db: Session, user_id: str, organization_id: int):
+    try:
+        db_authorized_user = models.OrganizationAuthorizedUsers(
+            user_id=user_id,
+            organization=organization_id,
+        )
+        db.add(db_authorized_user)
+        db.commit()
+        db.refresh(db_authorized_user)
+        logger.info(
+            "Authorized User created for Organization " +
+            f"(id={db_authorized_user}): {db_authorized_user.as_dict()}"
+        )
+        print(db_authorized_user)
+        return db_authorized_user
+
+    except Exception as e:
+        raise ImpossibleToCreateDatabaseEntry(
+            entity_type="OrganizationAuthorizedUsers",
+            entity_data=str(db_authorized_user),
+            reason=str(e)
+        )
+
+
+def permanentely_delete_authorized_user(db: Session, user_id: str):
+    return db\
+        .query(models.OrganizationAuthorizedUsers)\
+        .filter(models.OrganizationAuthorizedUsers.user_id == user_id)\
+        .filter(models.OrganizationAuthorizedUsers.deleted == bool(False))\
+        .delete()
+
+
+def permanentely_delete_authorized_user_for_organization(
+    db: Session, user_id: str, organization_id: int
+):
+    return db\
+        .query(models.OrganizationAuthorizedUsers)\
+        .filter(models.OrganizationAuthorizedUsers.user_id == user_id)\
+        .filter(
+            models.OrganizationAuthorizedUsers.organization == organization_id
+        )\
+        .filter(models.OrganizationAuthorizedUsers.deleted == bool(False))\
+        .delete()
+
+
+def delete_authorized_user(db: Session, user_id: str):
+
+    db_authorized_users = db\
+        .query(models.OrganizationAuthorizedUsers)\
+        .filter(models.OrganizationAuthorizedUsers.user_id == user_id)\
+        .filter(models.OrganizationAuthorizedUsers.deleted == bool(False))\
+        .all()
+    
+    for db_authorized_user in db_authorized_users:
+        db_authorized_user.deleted = True
+        db.commit()
+
+
+def delete_authorized_user_for_organization(
+    db: Session, user_id: str, organization_id: int
+):
+    db_authorized_users = db\
+        .query(models.OrganizationAuthorizedUsers)\
+        .filter(models.OrganizationAuthorizedUsers.user_id == user_id)\
+        .filter(
+            models.OrganizationAuthorizedUsers.organization == organization_id
+        )\
+        .filter(models.OrganizationAuthorizedUsers.deleted == bool(False))\
+        .all()
+
+    for db_authorized_user in db_authorized_users:
+        db_authorized_user.deleted = True
+        db.commit()
+
+def get_organization_authorized_users(db: Session, organization_id: int):
+    return db\
+        .query(models.OrganizationAuthorizedUsers)\
+        .filter(
+            models.OrganizationAuthorizedUsers.organization == organization_id
+        )\
+        .filter(models.OrganizationAuthorizedUsers.deleted == bool(False))\
+        .all()
+
+
+def get_authorized_organizations_for_user(db: Session, user_id: str):
+    return [
+        get_organization_by_id(
+            db=db,
+            id=db_authorized_user.organization
+        )
+        for db_authorized_user
+        in db
+        .query(models.OrganizationAuthorizedUsers)
+        .filter(
+            models.OrganizationAuthorizedUsers.user_id == user_id
+        )
+        .filter(models.OrganizationAuthorizedUsers.deleted == bool(False))
+        .all()
+    ]
+
+
+#######################################
+#    Organization CRUD Operations     #
+#######################################
 
 
 def create_organization(db: Session,
@@ -137,166 +346,6 @@ def create_organization(db: Session,
             entity_data=str(organization),
             reason=str(e)
         )
-
-
-def get_time_period_by_id(db: Session, id: int):
-    return tmf632_party_mgmt.TimePeriod.from_orm(
-        db
-        .query(models.TimePeriod)
-        .filter(models.TimePeriod.id == id)
-        .filter(models.TimePeriod.deleted == bool(False))
-        .first()
-    )
-
-
-def get_party_characteristics_by_organization_id(
-    db: Session,
-    organization_id: int
-):
-    return [
-        tmf632_party_mgmt.Characteristic.from_orm(characteristic)
-        for characteristic
-        in db
-        .query(models.Characteristic)
-        .filter(models.Characteristic.organization == organization_id)
-        .filter(models.Characteristic.deleted == bool(False))
-        .all()
-    ]
-
-
-def get_organization_by_id(db: Session, id: int):
-    organization = db\
-        .query(models.Organization)\
-        .filter(models.Organization.id == id)\
-        .filter(models.Organization.deleted == bool(False))\
-        .first()
-
-    return organization
-
-
-def get_all_organizations(db: Session, filters: dict = {}):
-
-    organizations = db\
-        .query(models.Organization)\
-        .filter(models.Organization.deleted == bool(False))\
-        .filter_by(**filters)\
-        .all()
-
-    return organizations
-
-
-def permanentely_delete_time_period(db: Session, time_period_id: int):
-    return db\
-        .query(models.TimePeriod)\
-        .filter(models.TimePeriod.id == time_period_id)\
-        .filter(models.TimePeriod.deleted == bool(False))\
-        .delete()
-
-
-def permanentely_delete_party_characteristic_by_id(
-    db: Session,
-    characteristic_id: int
-):
-    return db\
-        .query(models.Characteristic)\
-        .filter(models.Characteristic.id == characteristic_id)\
-        .delete()
-
-
-def permanentely_delete_party_characteristic_by_organization_id(
-    db: Session,
-    organization_id: int
-):
-    return db\
-        .query(models.Characteristic)\
-        .filter(models.Characteristic.organization == organization_id)\
-        .delete()
-
-
-def delete_time_period(db: Session, time_period_id: int):
-    time_period = db\
-        .query(models.TimePeriod)\
-        .filter(models.TimePeriod.id == time_period_id)\
-        .filter(models.TimePeriod.deleted == bool(False))
-
-    if time_period:
-        time_period.delete = True
-        db.commit()
-
-
-def delete_party_characteristic_by_id(db: Session, characteristic_id: int):
-    party_characteristic = db\
-        .query(models.Characteristic)\
-        .filter(models.Characteristic.id == characteristic_id)\
-        .first()
-
-    if party_characteristic:
-        party_characteristic.deleted = True
-        db.commit()
-
-
-def delete_party_characteristic_by_organization_id(
-    db: Session,
-    organization_id: int
-):
-    party_characteristics = db\
-        .query(models.Characteristic)\
-        .filter(models.Characteristic.organization == organization_id)\
-        .filter(models.Characteristic.deleted == bool(False))\
-        .all()
-
-    for party_characteristic in party_characteristics:
-        party_characteristic.deleted = True
-        db.commit()
-
-
-def permanentely_delete_organization(db: Session, organization_id: int):
-
-    db_organization = get_organization_by_id(db, organization_id)
-
-    # Delete Time Period
-    permanentely_delete_time_period(db, db_organization.id)
-
-    # Delete partyCharacteristics
-    permanentely_delete_party_characteristic_by_organization_id(
-        db,
-        db_organization.id
-    )
-
-    # Finally, delete the organization
-    db\
-        .query(models.Organization)\
-        .filter(models.Organization.id == organization_id)\
-        .delete()
-
-
-def delete_organization(db: Session, organization_id: int):
-
-    schema_organization = get_organization_by_id(db, organization_id)
-
-    if not schema_organization:
-        raise EntityDoesNotExist(
-            entity_type="Organization",
-            reason=f"Organization with id={organization_id} doesn't exist"
-        )
-
-    # Delete Time Period
-    delete_time_period(db, schema_organization.id)
-
-    # Delete partyCharacteristics
-    delete_party_characteristic_by_organization_id(
-        db,
-        schema_organization.id
-    )
-
-    # Finally, delete the organization
-    db_organization = db\
-        .query(models.Organization)\
-        .filter(models.Organization.id == schema_organization.id)\
-        .first()
-
-    db_organization.deleted = True
-    db.commit()
 
 
 def update_organization(db: Session,
@@ -429,3 +478,73 @@ def update_organization(db: Session,
             entity_data=str(organization),
             reason=str(e)
         )
+
+
+def get_organization_by_id(db: Session, id: int):
+    organization = db\
+        .query(models.Organization)\
+        .filter(models.Organization.id == id)\
+        .filter(models.Organization.deleted == bool(False))\
+        .first()
+
+    return organization
+
+
+def get_all_organizations(db: Session, filters: dict = {}):
+
+    organizations = db\
+        .query(models.Organization)\
+        .filter(models.Organization.deleted == bool(False))\
+        .filter_by(**filters)\
+        .all()
+
+    return organizations
+
+
+def permanentely_delete_organization(db: Session, organization_id: int):
+
+    db_organization = get_organization_by_id(db, organization_id)
+
+    # Delete Time Period
+    permanentely_delete_time_period(db, db_organization.id)
+
+    # Delete partyCharacteristics
+    permanentely_delete_party_characteristic_by_organization_id(
+        db,
+        db_organization.id
+    )
+
+    # Finally, delete the organization
+    db\
+        .query(models.Organization)\
+        .filter(models.Organization.id == organization_id)\
+        .delete()
+
+
+def delete_organization(db: Session, organization_id: int):
+
+    schema_organization = get_organization_by_id(db, organization_id)
+
+    if not schema_organization:
+        raise EntityDoesNotExist(
+            entity_type="Organization",
+            reason=f"Organization with id={organization_id} doesn't exist"
+        )
+
+    # Delete Time Period
+    delete_time_period(db, schema_organization.id)
+
+    # Delete partyCharacteristics
+    delete_party_characteristic_by_organization_id(
+        db,
+        schema_organization.id
+    )
+
+    # Finally, delete the organization
+    db_organization = db\
+        .query(models.Organization)\
+        .filter(models.Organization.id == schema_organization.id)\
+        .first()
+
+    db_organization.deleted = True
+    db.commit()

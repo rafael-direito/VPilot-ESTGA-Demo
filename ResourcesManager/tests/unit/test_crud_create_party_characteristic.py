@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 21:13:44
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-21 15:58:33
+# @Last Modified time: 2022-10-25 21:46:23
 
 # general imports
 import pytest
@@ -50,7 +50,6 @@ def test_characteristic_correct_database_creation_only_mandatory_values():
         organization_id=db_organization.id
     )
 
-    print(db_party_characteristic.__dict__)
     assert db_party_characteristic.name == "ci_cd_agent_url"
     assert db_party_characteristic.value == "http://192.168.1.200:8080/"
     assert db_party_characteristic.organization == db_organization.id
