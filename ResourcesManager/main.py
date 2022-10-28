@@ -3,15 +3,18 @@
 # @Email:  rdireito@av.it.pt
 # @Copyright: Insituto de Telecomunicações - Aveiro, Aveiro, Portugal
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-24 15:06:24
+# @Last Modified time: 2022-10-28 22:53:45
 
 # generic imports
-from fastapi import FastAPI
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    status
+)
 import logging
 from logging.handlers import RotatingFileHandler
 from fastapi.exceptions import RequestValidationError
 from http import HTTPStatus
-from fastapi_keycloak import FastAPIKeycloak
 
 # custom imports
 from database.database import SessionLocal
@@ -84,6 +87,8 @@ async def startup_event():
     pass
 
 
+# This function will handle all default pydantic exceptions raised in the
+# routers and parse them to TMF632 standardized exceptions
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):
 
@@ -105,3 +110,28 @@ async def validation_exception_handler(request, exc):
             )
         )
 
+
+# This function will handle all default FastAPIKeycloak exceptions raised in
+# the routers and parse them to TMF632 standardized exceptions
+@app.exception_handler(HTTPException)
+async def validation_authentication_authorization(request, exc):
+
+    if exc.status_code == status.HTTP_401_UNAUTHORIZED:
+        return RouterUtils.create_http_response(
+            http_status=HTTPStatus.UNAUTHORIZED,
+            content=RouterUtils.compose_error_payload(
+                code=HTTPStatus.UNAUTHORIZED,
+                reason="You should be authenticated in order to perform this" +
+                "request",
+            )
+        )
+    elif exc.status_code == status.HTTP_403_FORBIDDEN:
+        return RouterUtils.create_http_response(
+            http_status=HTTPStatus.FORBIDDEN,
+            content=RouterUtils.compose_error_payload(
+                code=HTTPStatus.FORBIDDEN,
+                reason=exc.detail,
+            )
+        )
+    else:
+        raise exc

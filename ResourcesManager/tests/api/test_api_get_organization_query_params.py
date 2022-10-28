@@ -2,23 +2,45 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 21:13:44
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-23 18:06:07
+# @Last Modified time: 2022-10-28 22:17:38
 
 # general imports
 import pytest
 
 # custom imports
-from tests.configure_test_db import engine
-from tests.configure_test_db import test_client
-from database.database import Base
 from database.crud import crud
 import schemas.tmf632_party_mgmt as TMF632Schemas
-from tests.configure_test_db import override_get_db
+from tests.configure_test_idp import (
+    inject_admin_user,
+    setup_test_idp,
+)
 
 
-# Create the DB before each test and delete it afterwards
+def import_modules():
+    # additional custom imports
+    from tests.configure_test_db import (
+        engine as imported_engine,
+        test_client as imported_test_client,
+        override_get_db as imported_override_get_db
+    )
+    from database.database import Base as imported_base
+    global engine
+    engine = imported_engine
+    global Base
+    Base = imported_base
+    global test_client
+    test_client = imported_test_client
+    global override_get_db
+    override_get_db = imported_override_get_db
+
+
+# Create the DB and IDP before each test and delete it afterwards
 @pytest.fixture(autouse=True)
-def test_db():
+def setup(monkeypatch, mocker):
+    # Setup Test IDP.
+    # This is required before loading the other modules
+    setup_test_idp(monkeypatch, mocker)
+    import_modules()
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
@@ -26,6 +48,9 @@ def test_db():
 
 # Tests
 def test_fields_url_params():
+
+    # Make request using a VPilot Admin and Testbed Admin Role
+    inject_admin_user()
 
     # Test
 
@@ -63,6 +88,10 @@ def test_fields_url_params():
 def test_get_filtered_organization():
 
     # Prepare Test
+
+    # Make request using a VPilot Admin and Testbed Admin Role
+    inject_admin_user()
+
     database = next(override_get_db())
 
     organization = TMF632Schemas.OrganizationCreate(

@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-25 17:58:35
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-25 18:26:38
+# @Last Modified time: 2022-10-28 14:42:33
 
 from fastapi_keycloak import FastAPIKeycloak
 import os

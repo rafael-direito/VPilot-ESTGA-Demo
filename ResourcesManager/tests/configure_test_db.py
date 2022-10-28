@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 22:45:02
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-20 10:14:01
+# @Last Modified time: 2022-10-28 16:29:19
 
 # general imports
 from sqlalchemy import create_engine
@@ -12,7 +12,6 @@ from fastapi.testclient import TestClient
 # custom imports
 from main import app, get_db
 from routers import organizations_router
-
 
 engine = create_engine(
     url="sqlite:///./test.db",

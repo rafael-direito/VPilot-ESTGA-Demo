@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 12:00:16
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-25 22:24:44
+# @Last Modified time: 2022-10-28 22:50:08
 
 # general imports
 import logging
@@ -219,7 +219,7 @@ def delete_authorized_user(db: Session, user_id: str):
         .filter(models.OrganizationAuthorizedUsers.user_id == user_id)\
         .filter(models.OrganizationAuthorizedUsers.deleted == bool(False))\
         .all()
-    
+
     for db_authorized_user in db_authorized_users:
         db_authorized_user.deleted = True
         db.commit()
@@ -240,6 +240,7 @@ def delete_authorized_user_for_organization(
     for db_authorized_user in db_authorized_users:
         db_authorized_user.deleted = True
         db.commit()
+
 
 def get_organization_authorized_users(db: Session, organization_id: int):
     return db\
@@ -401,7 +402,7 @@ def update_organization(db: Session,
                     db,
                     db_organization_id
                 )
-            print(old_party_characteristics)
+
             # Delete all old db entries
             delete_party_characteristic_by_organization_id(
                 db,
