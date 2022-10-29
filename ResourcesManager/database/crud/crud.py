@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 12:00:16
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-28 22:50:08
+# @Last Modified time: 2022-10-29 11:15:46
 
 # general imports
 import logging
@@ -42,13 +42,11 @@ def create_time_period(db: Session,
 
 
 def get_time_period_by_id(db: Session, id: int):
-    return tmf632_party_mgmt.TimePeriod.from_orm(
-        db
-        .query(models.TimePeriod)
-        .filter(models.TimePeriod.id == id)
-        .filter(models.TimePeriod.deleted == bool(False))
+    return db\
+        .query(models.TimePeriod)\
+        .filter(models.TimePeriod.id == id)\
+        .filter(models.TimePeriod.deleted == bool(False))\
         .first()
-    )
 
 
 def delete_time_period(db: Session, time_period_id: int):
@@ -105,15 +103,11 @@ def get_party_characteristics_by_organization_id(
     db: Session,
     organization_id: int
 ):
-    return [
-        tmf632_party_mgmt.Characteristic.from_orm(characteristic)
-        for characteristic
-        in db
-        .query(models.Characteristic)
-        .filter(models.Characteristic.organization == organization_id)
-        .filter(models.Characteristic.deleted == bool(False))
+    return db\
+        .query(models.Characteristic)\
+        .filter(models.Characteristic.organization == organization_id)\
+        .filter(models.Characteristic.deleted == bool(False))\
         .all()
-    ]
 
 
 def permanentely_delete_party_characteristic_by_id(
@@ -276,17 +270,17 @@ def get_authorized_organizations_for_user(db: Session, user_id: str):
 
 def create_organization(db: Session,
                         organization: tmf632_party_mgmt.OrganizationCreate):
-
-    db_time_period_id = None
-    db_organization_id = None
-    db_party_characteristics_id = None
-
     try:
         db_time_period_id = None
         # Try to create a new TimePeriod DB Entry
         if organization.existsDuring:
-            db_time_period = create_time_period(db, organization.existsDuring)
-            db_time_period_id = db_time_period.id
+            time_period = models.TimePeriod(
+                **organization.existsDuring.dict()
+            )
+            db.add(time_period)
+            db.flush()
+            db.refresh(time_period)
+            db_time_period_id = time_period.id
 
         # Check if a status was assigned to the organization
         status_value = None
@@ -309,39 +303,26 @@ def create_organization(db: Session,
         )
 
         db.add(db_organization)
-        db.commit()
+        db.flush()
         db.refresh(db_organization)
-        db_organization_id = db_organization.id
         logger.info(f"Organization created: {db_organization.as_dict()}")
 
         # Try to create a new partyCharacteristic DB Entry
         if organization.partyCharacteristic:
-            db_party_characteristics_id = []
             for party_characteristic in organization.partyCharacteristic:
-                db_party_characteristics_id.append(
-                    create_party_characteristic(
-                        db=db,
-                        party_characteristic=party_characteristic,
-                        organization_id=db_organization_id
-                    ).id
+                db_party_characteristic = models.Characteristic(
+                    **party_characteristic.dict()
                 )
+                db_party_characteristic.organization = db_organization.id
+                db.add(db_party_characteristic)
+                db.flush()
+
+        db.commit()
         return db_organization
 
     except Exception as e:
-
-        # Rollback everything we did
-        if db_organization_id:
-            permanentely_delete_organization(db, db_organization_id)
-        else:
-            if db_time_period_id:
-                delete_time_period(db, db_time_period_id)
-            if db_party_characteristics_id:
-                for party_characteristic_id in db_party_characteristics_id:
-                    delete_party_characteristic_by_id(
-                        db,
-                        party_characteristic_id
-                    )
-
+        # Rollback everything we did and raise appropriate exception
+        db.rollback()
         raise ImpossibleToCreateDatabaseEntry(
             entity_type="Organization",
             entity_data=str(organization),
@@ -352,11 +333,6 @@ def create_organization(db: Session,
 def update_organization(db: Session,
                         organization_id: int,
                         organization: tmf632_party_mgmt.OrganizationCreate):
-
-    db_time_period_id = None
-    db_organization_id = None
-    db_party_characteristics_id = None
-
     try:
         # Check if organization payload contains the organization's id
         if not organization_id:
@@ -377,53 +353,43 @@ def update_organization(db: Session,
                 reason=f"Organization with id={organization_id} doesn't exist"
             )
 
-        db_organization_id = organization_id
-        db_time_period_id = None
-        old_time_period = None
         # Try to create a new TimePeriod DB Entry
+        db_time_period_id = None
         if organization.existsDuring:
-            # Create backup, for rollbacks
+            # Delete previous one
             old_time_period = get_time_period_by_id(
                 db,
                 db_organization.existsDuring
             )
-            # Delete all old db entries
-            delete_time_period(db, db_organization.existsDuring)
-            # Then, create new ones
-            db_time_period = create_time_period(db, organization.existsDuring)
+            if old_time_period:
+                old_time_period.deleted = True
+                db.flush()
+            # create a new one
+            db_time_period = models.TimePeriod(
+                **organization.existsDuring.dict()
+            )
+            db.add(db_time_period)
+            db.flush()
+            db.refresh(db_time_period)
             db_time_period_id = db_time_period.id
 
         # Try to create a new partyCharacteristic DB Entry
-        old_party_characteristics = None
         if organization.partyCharacteristic:
-            # Create backup, for rollbacks
-            old_party_characteristics = \
-                get_party_characteristics_by_organization_id(
+            for characteristic in get_party_characteristics_by_organization_id(
                     db,
-                    db_organization_id
-                )
+                    organization_id
+            ):
+                if characteristic:
+                    characteristic.deleted = True
+                    db.flush()
 
-            # Delete all old db entries
-            delete_party_characteristic_by_organization_id(
-                db,
-                db_organization_id
-            )
-            old_party_characteristics = \
-                get_party_characteristics_by_organization_id(
-                    db,
-                    db_organization_id
-                )
-            print(old_party_characteristics)
-            # Then, create new ones
-            db_party_characteristics_id = []
             for party_characteristic in organization.partyCharacteristic:
-                db_party_characteristics_id.append(
-                    create_party_characteristic(
-                        db=db,
-                        party_characteristic=party_characteristic,
-                        organization_id=db_organization_id
-                    ).id
+                db_party_characteristic = models.Characteristic(
+                    **party_characteristic.dict()
                 )
+                db_party_characteristic.organization = db_organization.id
+                db.add(db_party_characteristic)
+                db.flush()
 
         # Check if a status was assigned to the organization
         status_value = None
@@ -443,37 +409,21 @@ def update_organization(db: Session,
         db_organization._schemaLocation = None
         db_organization._type = None
 
-        db.commit()
+        db.flush()
         db.refresh(db_organization)
-        db_organization_id = db_organization.id
         logger.info(f"Organization updated: {db_organization.as_dict()}")
 
+        # Finally, commit
+        db.commit()
         return db_organization
 
     except EntityDoesNotExist as e:
+        # Rollback everything we did and raise appropriate exception
+        db.rollback()
         raise e
     except Exception as e:
-
-        # Rollback everything we did
-        if db_organization_id:
-            permanentely_delete_organization(db, db_organization_id)
-        else:
-            if db_time_period_id:
-                delete_time_period(db, db_time_period_id)
-                if old_time_period:
-                    db.add(old_time_period)
-                    db.commit()
-            if db_party_characteristics_id:
-                for party_characteristic_id in db_party_characteristics_id:
-                    delete_party_characteristic_by_id(
-                        db,
-                        party_characteristic_id
-                    )
-                if old_party_characteristics:
-                    for old_party_characteristic in old_party_characteristics:
-                        db.add(old_party_characteristic)
-                        db.commit()
-
+        # Rollback everything we did and raise appropriate exception
+        db.rollback()
         raise ImpossibleToCreateDatabaseEntry(
             entity_type="Organization",
             entity_data=str(organization),

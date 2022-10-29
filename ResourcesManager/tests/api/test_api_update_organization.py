@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 21:13:44
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-28 22:50:24
+# @Last Modified time: 2022-10-29 11:12:29
 
 # general imports
 import pytest
@@ -101,6 +101,7 @@ def test_correct_organization_update_by_global_admin():
     assert db_organization.organizationType is None
     assert db_organization.existsDuring is None
     # After the Update
+    print(response.json())
     assert response.status_code == 200
     assert response.json()['name'] == "ITAv's Testbed"
     assert response.json()['tradingName'] == "ITAv"
