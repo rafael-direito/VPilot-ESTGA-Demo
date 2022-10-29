@@ -3,7 +3,7 @@
 # @Email:  rdireito@av.it.pt
 # @Copyright: Insituto de Telecomunicações - Aveiro, Aveiro, Portugal
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-29 17:09:46
+# @Last Modified time: 2022-10-29 19:04:04
 
 # generic imports
 from fastapi import (
@@ -307,7 +307,7 @@ async def update_organization(
 
 @router.get(
     "/organization/{id}/authorized-users",
-    tags=["organization"],
+    tags=["authorized users"],
     summary="Lists all Organization's Authorized Users",
     description="This operation list or find all Organization's " +
     "Authorized Users.",
@@ -390,7 +390,7 @@ async def get_organization_authorized_users(
 
 @router.post(
     "/organization/{id}/authorized-users",
-    tags=["organization"],
+    tags=["authorized users"],
     summary="Create new Organization's Authorized User",
     description="This operation creates a new Organization " +
     "Authorized User.",
@@ -484,7 +484,7 @@ async def create_organization_authorized_user(
 
 @router.delete(
     "/organization/{id}/authorized-users/{user_id}",
-    tags=["organization"],
+    tags=["authorized users"],
     summary="Delete Organization's Authorized User",
     description="This operation deletes an Organization Authorized User.",
     response_model=AuthorizedUsersSchemas.OrganizationAuthorizedUsers,
