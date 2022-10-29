@@ -6,7 +6,7 @@ The Resources Manager Service stores and manages all information related to the 
 
 ## REST API Standardization
 
-This Service's API is standardized with the TM632 - Party Management REST API specification. More information on this TMF standard can be found [here](https://www.tmforum.org/resources/standard/tmf632-party-management-api-rest-specification-r19-0-0/), and its OpenAPI 3 specification is available [here](https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF632-Party-v4.0.0.swagger.json). Only the Organization-related endpoints were implemented and, for now, only (i) the Organization's base information, (ii) its Party Characteristics, and (iii) its validity Time Period are persisted. More enpoints and features will be added on-demand.
+This Service's API is standardized with the TM632 - Party Management REST API specification. More information on this TMF standard can be found [here](https://www.tmforum.org/resources/standard/tmf632-party-management-api-rest-specification-r19-0-0/), and its OpenAPI 3 specification is available [here](https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF632-Party-v4.0.0.swagger.json). Only the Organization-related endpoints were implemented and, for now, only (i) the Organization's base information, (ii) its Party Characteristics, and (iii) its validity Time Period are persisted. More endpoints and features will be added on demand.
 
 ## REST API Authentication and Authorization Mechanisms
 
