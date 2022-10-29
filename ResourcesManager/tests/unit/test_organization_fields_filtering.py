@@ -2,27 +2,51 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-21 09:58:55
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-21 10:44:35
+# @Last Modified time: 2022-10-29 10:34:40
 
 # general imports
 import pytest
 from fastapi.encoders import jsonable_encoder
 
 # custom imports
-from tests.configure_test_db import engine
-from database.database import Base
-import schemas.tmf632_party_mgmt as TMF632Schemas
 from routers.aux import filter_organization_fields
+import schemas.tmf632_party_mgmt as TMF632Schemas
+from tests.configure_test_idp import (
+    setup_test_idp,
+)
 
 
-# Create the DB before each test and delete it afterwards
+def import_modules():
+    # additional custom imports
+    from tests.configure_test_db import (
+        engine as imported_engine,
+        test_client as imported_test_client,
+        override_get_db as imported_override_get_db
+    )
+    from database.database import Base as imported_base
+    global engine
+    engine = imported_engine
+    global Base
+    Base = imported_base
+    global test_client
+    test_client = imported_test_client
+    global override_get_db
+    override_get_db = imported_override_get_db
+
+
+# Create the DB and IDP before each test and delete it afterwards
 @pytest.fixture(autouse=True)
-def test_db():
+def setup(monkeypatch, mocker):
+    # Setup Test IDP.
+    # This is required before loading the other modules
+    setup_test_idp(monkeypatch, mocker)
+    import_modules()
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
 
 
+# Tests
 def test_query_filtering_parsing():
 
     # Prepare Test
