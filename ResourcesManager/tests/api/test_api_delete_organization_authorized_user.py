@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 21:13:44
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-29 16:58:55
+# @Last Modified time: 2022-10-29 17:14:13
 
 # general imports
 import pytest
@@ -51,7 +51,7 @@ def setup(monkeypatch, mocker):
 
 
 # Tests
-def test_correct_organization_post_authorized_users():
+def test_correct_organization_delete_authorized_user():
 
     # Prepare Test
 
@@ -68,48 +68,46 @@ def test_correct_organization_post_authorized_users():
             organizationType="Testbed",
         )
     )
-
-    response_before_update = test_client.get(
-        f"/organization/{db_organization.id}/authorized-users"
+    # Create Authorized Users
+    user_id = "XXXX"
+    crud.create_authorized_user(
+        db=database,
+        user_id=user_id,
+        organization_id=db_organization.id
     )
 
-    response_after_update = test_client.post(
-        f"/organization/{db_organization.id}/authorized-users",
-        json={
-            "user_id": "XXXX",
-        }
+    assert user_id in [
+        user.user_id
+        for user
+        in db_organization.authorizedUsersParsed
+    ]
+
+    response = test_client.delete(
+        f"/organization/{db_organization.id}/authorized-users/{user_id}",
     )
 
-    assert response_before_update.status_code == 200
-    assert response_before_update.json()['organization_id'] == "1"
-    assert isinstance(response_before_update.json()['authorized_users'], list)
-    assert len(response_before_update.json()['authorized_users']) == 0
-    assert response_after_update.status_code == 200
-    assert response_after_update.json()['organization_id'] == "1"
-    assert isinstance(response_after_update.json()['authorized_users'], list)
-    assert response_after_update.json()['authorized_users'][0]["user_id"]\
-        == "XXXX"
+    assert response.status_code == 204
+    assert user_id not in [
+        user.user_id
+        for user
+        in db_organization.authorizedUsersParsed
+    ]
 
 
-def test_post_nonexistente_organization_authorized_users():
+def test_delete_nonexistente_organization_authorized_users():
 
     # Make request using a VPilot Admin and Testbed Admin Role
     inject_admin_user()
 
     # Test
-    response = test_client.post(
-        "/organization/0/authorized-users",
-        json={
-            "user_id": "XXXX",
-        }
-    )
+    response = test_client.delete("/organization/0/authorized-users/XXXX")
 
     assert response.status_code == 400
     assert "The requested organization doesn't exist."\
         in response.json()['reason']
 
 
-def test_post_organization_authorized_users_without_required_roles():
+def test_delete_organization_authorized_users_without_required_roles():
 
     # Prepare Test
 
@@ -121,12 +119,7 @@ def test_post_organization_authorized_users_without_required_roles():
         roles=[]
     )
 
-    response = test_client.post(
-        "/organization/0/authorized-users",
-        json={
-            "user_id": "XXXX",
-        }
-    )
+    response = test_client.delete("/organization/0/authorized-users/XXXX")
 
     assert response.status_code == 403
     assert response.json()['code'] == 403
@@ -134,7 +127,7 @@ def test_post_organization_authorized_users_without_required_roles():
         'required to perform this action'
 
 
-def test_post_organization_authorized_users_without_permissions():
+def test_delete_organization_authorized_users_without_permissions():
 
     # Prepare Test
 
@@ -148,22 +141,17 @@ def test_post_organization_authorized_users_without_permissions():
 
     database = next(override_get_db())
 
-    organization1 = TMF632Schemas.OrganizationCreate(
-        tradingName="XXX",
-        name="XXX's Testbed",
-        organizationType="Testbed",
-    )
-
     result = crud.create_organization(
         db=database,
-        organization=organization1
+        organization=TMF632Schemas.OrganizationCreate(
+            tradingName="XXX",
+            name="XXX's Testbed",
+            organizationType="Testbed",
+        )
     )
 
-    response = test_client.post(
-        f"/organization/{result.id}/authorized-users",
-        json={
-            "user_id": "XXXX",
-        }
+    response = test_client.delete(
+        f"/organization/{result.id}/authorized-users/XXXX",
     )
 
     assert response.status_code == 403

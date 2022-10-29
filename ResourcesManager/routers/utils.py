@@ -2,11 +2,11 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 17:21:10
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-29 16:23:35
+# @Last Modified time: 2022-10-29 16:59:36
 
 from http import HTTPStatus
 from fastapi.responses import JSONResponse
-from typing import Any, List
+from typing import Any
 from schemas import tmf632_party_mgmt as TMF632
 from schemas import authorized_users as AuthorizedUsersSchemas
 from database.models import models

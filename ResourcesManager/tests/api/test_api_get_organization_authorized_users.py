@@ -2,11 +2,10 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 21:13:44
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-29 16:43:09
+# @Last Modified time: 2022-10-29 16:58:42
 
 # general imports
 import pytest
-import datetime
 
 # custom imports
 from database.crud import crud
