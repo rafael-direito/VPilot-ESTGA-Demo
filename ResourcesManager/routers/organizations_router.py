@@ -3,14 +3,13 @@
 # @Email:  rdireito@av.it.pt
 # @Copyright: Insituto de Telecomunicações - Aveiro, Aveiro, Portugal
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-29 19:04:04
+# @Last Modified time: 2022-10-29 21:58:57
 
 # generic imports
 from fastapi import (
     APIRouter,
     Depends,
     Query,
-    HTTPException,
 )
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
@@ -20,7 +19,6 @@ from typing import Optional
 import logging
 
 # custom imports
-from routers import utils as Utils
 import database.crud.exceptions as CRUDExceptions
 import schemas.tmf632_party_mgmt as TMF632Schemas
 import schemas.authorized_users as AuthorizedUsersSchemas
@@ -30,7 +28,11 @@ from routers.aux import (
     GetOrganizationFilters,
     filter_organization_fields,
     parse_organization_query_filters,
-    check_if_user_is_authorized_to_access_an_organization
+    check_if_user_is_authorized_to_access_an_organization,
+    create_http_response,
+    organization_to_organization_schema,
+    organization_authorized_users_to_schema,
+    exception_to_http_response
 )
 from aux.constants import (
     IDP_ADMIN_USER,
@@ -65,30 +67,15 @@ async def create_organization(
     try:
         organization = crud.create_organization(db, organization)
 
-        return Utils.create_http_response(
+        return create_http_response(
             http_status=HTTPStatus.CREATED,
             # Return parsed
             content=jsonable_encoder(
-                Utils.organization_to_organization_schema(organization)
-            )
-        )
-
-    except CRUDExceptions.ImpossibleToCreateDatabaseEntry as exception:
-        return Utils.create_http_response(
-            http_status=HTTPStatus.INTERNAL_SERVER_ERROR,
-            content=Utils.compose_error_payload(
-                code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                reason=exception.reason,
+                organization_to_organization_schema(organization)
             )
         )
     except Exception as exception:
-        return Utils.create_http_response(
-            http_status=HTTPStatus.INTERNAL_SERVER_ERROR,
-            content=Utils.compose_error_payload(
-                code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                reason=str(exception),
-            )
-        )
+        return exception_to_http_response(exception)
 
 
 @router.get(
@@ -149,7 +136,7 @@ async def get_organization(
         for organization in organizations:
             if organization != {}:
                 tmf632_organizations.append(
-                    Utils.organization_to_organization_schema(organization)
+                    organization_to_organization_schema(organization)
                 )
             else:
                 tmf632_organizations.append(organization)
@@ -165,33 +152,14 @@ async def get_organization(
         ]
 
         # Response
-        return Utils.create_http_response(
+        return create_http_response(
                 http_status=HTTPStatus.OK,
                 content=encoded_organizations[0]
                 if id
                 else encoded_organizations
         )
-
-    except CRUDExceptions.ImpossibleToCreateDatabaseEntry as exception:
-        return Utils.create_http_response(
-            http_status=HTTPStatus.INTERNAL_SERVER_ERROR,
-            content=Utils.compose_error_payload(
-                code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                reason=exception.reason,
-            )
-        )
-    # Propagate HTTP exceptions
-    except HTTPException as exception:
-        raise exception
-    # For other exceptions
     except Exception as exception:
-        return Utils.create_http_response(
-            http_status=HTTPStatus.INTERNAL_SERVER_ERROR,
-            content=Utils.compose_error_payload(
-                code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                reason=str(exception),
-            )
-        )
+        return exception_to_http_response(exception)
 
 
 @router.delete(
@@ -208,25 +176,11 @@ async def delete_organization(
     try:
         crud.delete_organization(db, id)
         # Response
-        return Utils.create_http_response(
+        return create_http_response(
                 http_status=HTTPStatus.NO_CONTENT
         )
-    except CRUDExceptions.EntityDoesNotExist as exception:
-        return Utils.create_http_response(
-            http_status=HTTPStatus.BAD_REQUEST,
-            content=Utils.compose_error_payload(
-                code=HTTPStatus.BAD_REQUEST,
-                reason=exception.reason,
-            )
-        )
     except Exception as exception:
-        return Utils.create_http_response(
-            http_status=HTTPStatus.INTERNAL_SERVER_ERROR,
-            content=Utils.compose_error_payload(
-                code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                reason=str(exception),
-            )
-        )
+        return exception_to_http_response(exception)
 
 
 @router.patch(
@@ -257,52 +211,18 @@ async def update_organization(
         updated_organization = crud.update_organization(db, id, organization)
 
         # Response
-        return Utils.create_http_response(
+        return create_http_response(
                 http_status=HTTPStatus.OK,
                 # Parse Organization to TM632 Organization
                 # And encode it
                 content=jsonable_encoder(
-                    Utils.organization_to_organization_schema(
+                    organization_to_organization_schema(
                         updated_organization
                     )
                 )
         )
-    # The user tried to update and organization that doesn't exist
-    except CRUDExceptions.EntityDoesNotExist as exception:
-        return Utils.create_http_response(
-            http_status=HTTPStatus.BAD_REQUEST,
-            content=Utils.compose_error_payload(
-                code=HTTPStatus.BAD_REQUEST,
-                reason=exception.reason,
-            )
-        )
-    # Something wrong happened durin the organization update
-    except CRUDExceptions.ImpossibleToCreateDatabaseEntry as exception:
-        return Utils.create_http_response(
-            http_status=HTTPStatus.INTERNAL_SERVER_ERROR,
-            content=Utils.compose_error_payload(
-                code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                reason=exception.reason,
-            )
-        )
-    # Propagate HTTP exceptions
-    except HTTPException as exception:
-        return Utils.create_http_response(
-            http_status=HTTPStatus.FORBIDDEN,
-            content=Utils.compose_error_payload(
-                code=HTTPStatus.FORBIDDEN,
-                reason=exception.detail,
-            )
-        )
-    # For other exceptions
     except Exception as exception:
-        return Utils.create_http_response(
-            http_status=HTTPStatus.INTERNAL_SERVER_ERROR,
-            content=Utils.compose_error_payload(
-                code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                reason=str(exception),
-            )
-        )
+        return exception_to_http_response(exception)
 
 
 @router.get(
@@ -342,50 +262,17 @@ async def get_organization_authorized_users(
         )
 
         # Response
-        return Utils.create_http_response(
+        return create_http_response(
                 http_status=HTTPStatus.OK,
                 content=jsonable_encoder(
-                    Utils.organization_authorized_users_to_schema(
+                    organization_authorized_users_to_schema(
                         organization=organization
                     )
                 )
             )
 
-    except CRUDExceptions.ImpossibleToCreateDatabaseEntry as exception:
-        return Utils.create_http_response(
-            http_status=HTTPStatus.INTERNAL_SERVER_ERROR,
-            content=Utils.compose_error_payload(
-                code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                reason=exception.reason,
-            )
-        )
-    # Propagate HTTP exceptions
-    except HTTPException as exception:
-        return Utils.create_http_response(
-            http_status=HTTPStatus.FORBIDDEN,
-            content=Utils.compose_error_payload(
-                code=HTTPStatus.FORBIDDEN,
-                reason=exception.detail,
-            )
-        )
-    # Propagate exception
-    except CRUDExceptions.EntityDoesNotExist as exception:
-        return Utils.create_http_response(
-            http_status=HTTPStatus.BAD_REQUEST,
-            content=Utils.compose_error_payload(
-                code=HTTPStatus.BAD_REQUEST,
-                reason=exception.reason,
-            )
-        )
-    # For other exceptions
     except Exception as exception:
-        return Utils.create_http_response(
-            http_status=HTTPStatus.INTERNAL_SERVER_ERROR,
-            content=Utils.compose_error_payload(
-                code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                reason=str(exception),
-            )
-        )
+        return exception_to_http_response(exception)
 
 
 @router.post(
@@ -436,50 +323,17 @@ async def create_organization_authorized_user(
         )
 
         # Response
-        return Utils.create_http_response(
+        return create_http_response(
                 http_status=HTTPStatus.OK,
                 content=jsonable_encoder(
-                    Utils.organization_authorized_users_to_schema(
+                    organization_authorized_users_to_schema(
                         organization=organization
                     )
                 )
             )
 
-    except CRUDExceptions.ImpossibleToCreateDatabaseEntry as exception:
-        return Utils.create_http_response(
-            http_status=HTTPStatus.INTERNAL_SERVER_ERROR,
-            content=Utils.compose_error_payload(
-                code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                reason=exception.reason,
-            )
-        )
-    # Propagate HTTP exceptions
-    except HTTPException as exception:
-        return Utils.create_http_response(
-            http_status=HTTPStatus.FORBIDDEN,
-            content=Utils.compose_error_payload(
-                code=HTTPStatus.FORBIDDEN,
-                reason=exception.detail,
-            )
-        )
-    # Propagate exception
-    except CRUDExceptions.EntityDoesNotExist as exception:
-        return Utils.create_http_response(
-            http_status=HTTPStatus.BAD_REQUEST,
-            content=Utils.compose_error_payload(
-                code=HTTPStatus.BAD_REQUEST,
-                reason=exception.reason,
-            )
-        )
-    # For other exceptions
     except Exception as exception:
-        return Utils.create_http_response(
-            http_status=HTTPStatus.INTERNAL_SERVER_ERROR,
-            content=Utils.compose_error_payload(
-                code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                reason=str(exception),
-            )
-        )
+        return exception_to_http_response(exception)
 
 
 @router.delete(
@@ -528,45 +382,13 @@ async def delete_organization_authorized_user(
         )
 
         # Response
-        return Utils.create_http_response(
+        return create_http_response(
                 http_status=HTTPStatus.NO_CONTENT
             )
 
-    except CRUDExceptions.ImpossibleToCreateDatabaseEntry as exception:
-        return Utils.create_http_response(
-            http_status=HTTPStatus.INTERNAL_SERVER_ERROR,
-            content=Utils.compose_error_payload(
-                code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                reason=exception.reason,
-            )
-        )
-    # Propagate HTTP exceptions
-    except HTTPException as exception:
-        return Utils.create_http_response(
-            http_status=HTTPStatus.FORBIDDEN,
-            content=Utils.compose_error_payload(
-                code=HTTPStatus.FORBIDDEN,
-                reason=exception.detail,
-            )
-        )
-    # Propagate exception
-    except CRUDExceptions.EntityDoesNotExist as exception:
-        return Utils.create_http_response(
-            http_status=HTTPStatus.BAD_REQUEST,
-            content=Utils.compose_error_payload(
-                code=HTTPStatus.BAD_REQUEST,
-                reason=exception.reason,
-            )
-        )
-    # For other exceptions
     except Exception as exception:
-        return Utils.create_http_response(
-            http_status=HTTPStatus.INTERNAL_SERVER_ERROR,
-            content=Utils.compose_error_payload(
-                code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                reason=str(exception),
-            )
-        )
+        return exception_to_http_response(exception)
+
 # @router.get("/user")  # Requires logged in
 # def current_users(user: OIDCUser = Depends(idp.get_current_user())):
 #     return user

@@ -3,7 +3,7 @@
 # @Email:  rdireito@av.it.pt
 # @Copyright: Insituto de Telecomunicações - Aveiro, Aveiro, Portugal
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-28 22:53:45
+# @Last Modified time: 2022-10-29 21:58:40
 
 # generic imports
 from fastapi import (
@@ -21,7 +21,7 @@ from database.database import SessionLocal
 from database.database import engine
 from database.models import models
 from routers import organizations_router
-from routers import utils as RouterUtils
+from routers import aux as RouterAux
 
 # Logger
 logger = logging.getLogger()
@@ -102,9 +102,9 @@ async def validation_exception_handler(request, exc):
     logger.error("Exception Occurred in Payload's Validation: " +
                  ", ".join(error_messages))
 
-    return RouterUtils.create_http_response(
+    return RouterAux.create_http_response(
             http_status=HTTPStatus.BAD_REQUEST,
-            content=RouterUtils.compose_error_payload(
+            content=RouterAux.compose_error_payload(
                 code=HTTPStatus.BAD_REQUEST,
                 reason=", ".join(error_messages),
             )
@@ -117,18 +117,18 @@ async def validation_exception_handler(request, exc):
 async def validation_authentication_authorization(request, exc):
 
     if exc.status_code == status.HTTP_401_UNAUTHORIZED:
-        return RouterUtils.create_http_response(
+        return RouterAux.create_http_response(
             http_status=HTTPStatus.UNAUTHORIZED,
-            content=RouterUtils.compose_error_payload(
+            content=RouterAux.compose_error_payload(
                 code=HTTPStatus.UNAUTHORIZED,
                 reason="You should be authenticated in order to perform this" +
                 "request",
             )
         )
     elif exc.status_code == status.HTTP_403_FORBIDDEN:
-        return RouterUtils.create_http_response(
+        return RouterAux.create_http_response(
             http_status=HTTPStatus.FORBIDDEN,
-            content=RouterUtils.compose_error_payload(
+            content=RouterAux.compose_error_payload(
                 code=HTTPStatus.FORBIDDEN,
                 reason=exc.detail,
             )
