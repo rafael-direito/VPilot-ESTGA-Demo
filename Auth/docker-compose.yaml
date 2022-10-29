@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-24 14:17:09
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-29 17:40:03
+# @Last Modified time: 2022-10-29 17:59:07
 version: '3'
 
 volumes:
@@ -38,9 +38,12 @@ services:
       MY_REALM_CLIENT: vpilot-client
       MY_REALM_CLIENT_SECRET: dummy_client_secret
       MY_REALM_ADMIN_SECRET: dummy_admin_secret
+      # MY_REALM_REDIRECT_URI: "\"<uri_1>\",\"<uri_2>\""
       MY_REALM_REDIRECT_URI: "\"http://localhost:8000/*\",\"http://localhost:8001/*\""
+      # REALM_ROLES: <role_1_name>:<role_1_description>;<role_2_name>:<role_2_description>
       REALM_ROLES: VPilot-Admin:VPilot Admin;Testbed-Admin:VPilot Testbed Admin
-      REALM_USERS: 5gasp-admin:5gasp-password:VPilot-Admin;itav:itav-password:None
+      # REALM_USERS: <user_1_username>:<user_1_password>:<user_1_role_1>,<user_1_role_2>;<user_2_username>:<user_2_password>:<user_2_role_1>,<user_2_role_2>
+      REALM_USERS: 5gasp-admin:5gasp-password:VPilot-Admin,Testbed-Admin;itav:itav-password:None
 
     ports:
       - '8085:8080'
