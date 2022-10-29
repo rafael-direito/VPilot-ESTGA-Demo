@@ -8,12 +8,12 @@ The Resources Manager Service stores and manages all information related to the 
 
 This Service's API is standardized with the TM632 - Party Management REST API specification. More information on this TMF standard can be found [here](https://www.tmforum.org/resources/standard/tmf632-party-management-api-rest-specification-r19-0-0/), and its OpenAPI 3 specification is available [here](https://tmf-open-api-table-documents.s3.eu-west-1.amazonaws.com/OpenApiTable/4.0.0/swagger/TMF632-Party-v4.0.0.swagger.json). Only the Organization-related endpoints were implemented and, for now, only (i) the Organization's base information, (ii) its Party Characteristics, and (iii) its validity Time Period are persisted. More enpoints and features will be added on-demand.
 
-This standard was further extended to allow authentication and authorization operations, such as enforcing RBAC on the TMF632 base endpoints. Through this extension, it is now possible to manage the users that can get information on a specific organization, update and delete it. To this end, the following endpoints are provided:
+## REST API Authentication and Authorization Mechanisms
+
+The TMF632 standard was further extended to allow authentication and authorization operations, such as enforcing RBAC on the TMF632 base endpoints. Through this extension, it is now possible to manage the users that can get information on a specific organization, update and delete it. To this end, the following endpoints are provided:
 
 ![TMF632 Standard Extension](Docs/img/TMF632ExpansionNewEndpoints.png "TMF632 Standard Extension")
 
-
-## REST API Authentication and Authorization Mechanisms
 
 Currently, the Resources Manager Service doesn’t store any information regarding the system’s users, rather then its id. To this end, an external Identity Provider was used. The chosen IDP was Keycloak, and its thorough integration with the Resources Manager Service was achieved. 
  
