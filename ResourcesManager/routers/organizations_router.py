@@ -3,7 +3,7 @@
 # @Email:  rdireito@av.it.pt
 # @Copyright: Insituto de Telecomunicações - Aveiro, Aveiro, Portugal
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-29 13:58:05
+# @Last Modified time: 2022-10-29 16:42:23
 
 # generic imports
 from fastapi import (
@@ -23,6 +23,7 @@ import logging
 from routers import utils as Utils
 import database.crud.exceptions as CRUDExceptions
 import schemas.tmf632_party_mgmt as TMF632Schemas
+import schemas.authorized_users as AuthorizedUsersSchemas
 from idp.idp import idp
 import main
 from routers.aux import (
@@ -286,7 +287,13 @@ async def update_organization(
         )
     # Propagate HTTP exceptions
     except HTTPException as exception:
-        raise exception
+        return Utils.create_http_response(
+            http_status=HTTPStatus.FORBIDDEN,
+            content=Utils.compose_error_payload(
+                code=HTTPStatus.FORBIDDEN,
+                reason=exception.detail,
+            )
+        )
     # For other exceptions
     except Exception as exception:
         return Utils.create_http_response(
@@ -298,6 +305,89 @@ async def update_organization(
         )
 
 
+@router.get(
+    "/organization/{id}/authorized-users",
+    tags=["organization"],
+    summary="Lists all Organization's Authorized Users",
+    description="This operation list or find all Organization's " +
+    "Authorized Users.",
+    response_model=AuthorizedUsersSchemas.OrganizationAuthorizedUsers,
+)
+async def get_organization_authorized_users(
+    id: int = None,
+    db: Session = Depends(get_db),
+    user=Depends(idp.get_current_user(required_roles=[IDP_TESTBED_ADMIN_USER]))
+):
+    try:
+        # Operations for when the client requests a specific organization
+        # These operations ignore all query filters, since the organization is
+        # already 'filtered' using its id
+
+        # Get the organization, if it exists. Else, raise exception
+        organization = crud.get_organization_by_id(db, id)
+        if not organization:
+            raise CRUDExceptions.EntityDoesNotExist(
+                entity_type="Organization",
+                reason="The requested organization doesn't exist."
+            )
+
+        # If the user is not also an admin user, we have to verify if
+        # it has the permissions to get the organization he requested
+        # If the user doesn't possess the needed permissions, this
+        # function will raise an exception and the method will return a
+        # 403 FORBIDDEN
+        print("---")
+        check_if_user_is_authorized_to_access_an_organization(
+            user=user,
+            organization=organization
+        )
+        print("---")
+
+        # Response
+        return Utils.create_http_response(
+                http_status=HTTPStatus.OK,
+                content=jsonable_encoder(
+                    Utils.organization_authorized_users_to_schema(
+                        organization=organization
+                    )
+                )
+            )
+
+    except CRUDExceptions.ImpossibleToCreateDatabaseEntry as exception:
+        return Utils.create_http_response(
+            http_status=HTTPStatus.INTERNAL_SERVER_ERROR,
+            content=Utils.compose_error_payload(
+                code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                reason=exception.reason,
+            )
+        )
+    # Propagate HTTP exceptions
+    except HTTPException as exception:
+        return Utils.create_http_response(
+            http_status=HTTPStatus.FORBIDDEN,
+            content=Utils.compose_error_payload(
+                code=HTTPStatus.FORBIDDEN,
+                reason=exception.detail,
+            )
+        )
+    # Propagate exception
+    except CRUDExceptions.EntityDoesNotExist as exception:
+        return Utils.create_http_response(
+            http_status=HTTPStatus.BAD_REQUEST,
+            content=Utils.compose_error_payload(
+                code=HTTPStatus.BAD_REQUEST,
+                reason=exception.reason,
+            )
+        )
+    # For other exceptions
+    except Exception as exception:
+        return Utils.create_http_response(
+            http_status=HTTPStatus.INTERNAL_SERVER_ERROR,
+            content=Utils.compose_error_payload(
+                code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                reason=str(exception),
+            )
+        )
 # @router.get("/user")  # Requires logged in
 # def current_users(user: OIDCUser = Depends(idp.get_current_user())):
 #     return user

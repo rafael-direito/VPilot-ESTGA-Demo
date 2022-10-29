@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-20 18:16:45
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-29 13:48:49
+# @Last Modified time: 2022-10-29 16:40:41
 
 from typing import Optional
 from fastapi import (

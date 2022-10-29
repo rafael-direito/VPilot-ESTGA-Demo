@@ -2,12 +2,13 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 17:21:10
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-29 13:48:14
+# @Last Modified time: 2022-10-29 16:23:35
 
 from http import HTTPStatus
 from fastapi.responses import JSONResponse
-from typing import Any
+from typing import Any, List
 from schemas import tmf632_party_mgmt as TMF632
+from schemas import authorized_users as AuthorizedUsersSchemas
 from database.models import models
 
 
@@ -66,3 +67,14 @@ def organization_to_organization_schema(organization: models.Organization):
         )
 
     return schema
+
+
+def organization_authorized_users_to_schema(organization: models.Organization):
+    return AuthorizedUsersSchemas.OrganizationAuthorizedUsers(
+        organization_id=organization.id,
+        authorized_users=[
+            AuthorizedUsersSchemas.AuthorizedUser(user_id=user.user_id)
+            for user
+            in organization.authorizedUsersParsed
+        ]
+    )
