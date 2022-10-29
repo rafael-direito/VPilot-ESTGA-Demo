@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-21 09:58:55
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-29 10:34:40
+# @Last Modified time: 2022-10-29 13:21:38
 
 # general imports
 import pytest
@@ -50,7 +50,6 @@ def setup(monkeypatch, mocker):
 def test_query_filtering_parsing():
 
     # Prepare Test
-
     organization = TMF632Schemas.Organization(
         id=1,
         tradingName="XXX",

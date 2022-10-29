@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 21:13:44
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-29 10:34:06
+# @Last Modified time: 2022-10-29 13:20:42
 
 # general imports
 import pytest
@@ -50,6 +50,7 @@ def setup(monkeypatch, mocker):
 # Tests
 def test_complex_organization_database_update():
 
+    # Prepare Test
     database = next(override_get_db())
 
     organization = TMF632Schemas.OrganizationCreate(
@@ -81,7 +82,6 @@ def test_complex_organization_database_update():
         db=database,
         organization=organization
     )
-
     # Prepare Update
     organization.tradingName = "XXX"
     organization.name = "XXX's Testbed"
@@ -104,37 +104,27 @@ def test_complex_organization_database_update():
         organization=organization
     )
 
-    updated_organization = crud.get_organization_by_id(
-        database,
-        db_updated_organization.id
-    )
-
-    db_time_period = crud.get_time_period_by_id(
-        db=database,
-        id=db_updated_organization.existsDuring
-    )
-
-    db_characteristics = crud.get_party_characteristics_by_organization_id(
-        db=database,
-        organization_id=db_updated_organization.id
-    )
-
+    # Expected Output
     startDateTime = datetime.datetime(2020, 10, 22, 8, 31, 52, 26000)
     endDateTime = datetime.datetime(2021, 10, 22, 8, 31, 52, 26000)
 
-    assert updated_organization.tradingName == "XXX"
-    assert updated_organization.isHeadOffice
-    assert updated_organization.isLegalEntity
-    assert updated_organization.name == "XXX's Testbed"
+    # Test
+    assert db_updated_organization.tradingName == "XXX"
+    assert db_updated_organization.isHeadOffice
+    assert db_updated_organization.isLegalEntity
+    assert db_updated_organization.name == "XXX's Testbed"
     assert db_updated_organization.organizationType == "Testbed"
-
-    assert db_time_period.startDateTime.replace(tzinfo=None) == startDateTime
-    assert db_time_period.endDateTime.replace(tzinfo=None) == endDateTime
-
-    assert len(db_characteristics) == 1
-    assert db_characteristics[0].name == "test_name"
-    assert db_characteristics[0].value == "test_value"
-    assert db_characteristics[0].valueType == "test_value_type"
+    assert db_updated_organization.existsDuringParsed.startDateTime\
+        .replace(tzinfo=None) == startDateTime
+    assert db_updated_organization.existsDuringParsed.endDateTime\
+        .replace(tzinfo=None) == endDateTime
+    assert len(db_updated_organization.partyCharacteristicParsed) == 1
+    assert db_updated_organization.partyCharacteristicParsed[0].name\
+        == "test_name"
+    assert db_updated_organization.partyCharacteristicParsed[0].value\
+        == "test_value"
+    assert db_updated_organization.partyCharacteristicParsed[0].valueType\
+        == "test_value_type"
 
 
 def test_nonexistent_organization_database_update():

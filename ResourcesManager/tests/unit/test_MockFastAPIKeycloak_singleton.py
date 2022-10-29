@@ -2,13 +2,12 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-25 21:45:04
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-28 20:52:35
+# @Last Modified time: 2022-10-29 13:21:12
 
 # custom imports
 from tests.configure_test_idp import MockFastAPIKeycloak
 
 
-# Tests
 def test_singleton():
 
     instance_1 = MockFastAPIKeycloak()

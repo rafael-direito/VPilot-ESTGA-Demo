@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-21 09:58:55
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-29 10:35:02
+# @Last Modified time: 2022-10-29 13:21:52
 
 # general imports
 import pytest
@@ -49,8 +49,8 @@ def setup(monkeypatch, mocker):
 
 # Tests
 def test_organization_fields_filtering():
-    # Prepare Test
 
+    # Prepare Test
     organization_filters_1 = GetOrganizationFilters(
         href="http://example.org",
         isHeadOffice=True,
@@ -60,7 +60,6 @@ def test_organization_fields_filtering():
     )
 
     # Test
-
     results1 = parse_organization_query_filters(organization_filters_1)
 
     assert results1.get("href") == "http://example.org"

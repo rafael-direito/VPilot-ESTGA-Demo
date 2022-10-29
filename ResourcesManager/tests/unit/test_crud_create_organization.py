@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 21:13:44
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-29 10:31:04
+# @Last Modified time: 2022-10-29 12:23:23
 
 # general imports
 import pytest
@@ -50,114 +50,97 @@ def setup(monkeypatch, mocker):
 # Tests
 def test_simple_organization_database_creation():
 
-    database = next(override_get_db())
-
-    organization = TMF632Schemas.OrganizationCreate(
-        tradingName="ITAv"
-    )
-
+    # Prepare Test
     result = crud.create_organization(
-        db=database,
-        organization=organization
+        db=next(override_get_db()),
+        organization=TMF632Schemas.OrganizationCreate(
+            tradingName="ITAv"
+        )
     )
-
-    assert crud.get_organization_by_id(
-        db=database,
-        id=result.id).tradingName == "ITAv"
+    # Test
+    assert result.tradingName == "ITAv"
 
 
 def test_medium_organization_database_creation():
 
-    database = next(override_get_db())
-
-    organization = TMF632Schemas.OrganizationCreate(
-        tradingName="ITAv",
-        isHeadOffice=True,
-        isLegalEntity=True,
-        name="ITAv's Testbed",
-        organizationType="Testbed",
-    )
-
+    # Prepare Test
     result = crud.create_organization(
-        db=database,
-        organization=organization
+        db=next(override_get_db()),
+        organization=TMF632Schemas.OrganizationCreate(
+            tradingName="ITAv",
+            isHeadOffice=True,
+            isLegalEntity=True,
+            name="ITAv's Testbed",
+            organizationType="Testbed",
+        )
     )
 
-    created_organization = crud.get_organization_by_id(
-        db=database,
-        id=result.id
-    )
-
-    assert created_organization.tradingName == "ITAv"
-    assert created_organization.isHeadOffice
-    assert created_organization.isLegalEntity
-    assert created_organization.name == "ITAv's Testbed"
-    assert created_organization.organizationType == "Testbed"
+    # Test
+    assert result.tradingName == "ITAv"
+    assert result.isHeadOffice
+    assert result.isLegalEntity
+    assert result.name == "ITAv's Testbed"
+    assert result.organizationType == "Testbed"
 
 
 def test_complex_organization_database_creation():
 
-    database = next(override_get_db())
-
-    organization = TMF632Schemas.OrganizationCreate(
-        tradingName="ITAv",
-        isHeadOffice=True,
-        isLegalEntity=True,
-        name="ITAv's Testbed",
-        organizationType="Testbed",
-        existsDuring=TMF632Schemas.TimePeriod(
-            startDateTime="2015-10-22T08:31:52.026Z",
-            endDateTime="2016-10-22T08:31:52.026Z",
-        ),
-        partyCharacteristic=[
-            TMF632Schemas.Characteristic(
-                name="ci_cd_agent_url",
-                value="http://192.168.1.200:8080/",
-                valueType="URL",
-            ),
-            TMF632Schemas.Characteristic(
-                name="ci_cd_agent_username",
-                value="admin",
-                valueType="str",
-            )
-        ],
-        status="validated"
-    )
-
+    # Prepare Test
     db_organization = crud.create_organization(
-        db=database,
-        organization=organization
-    )
-
-    db_time_period = crud.get_time_period_by_id(
-        db=database,
-        id=db_organization.existsDuring
-    )
-
-    db_characteristics = crud.get_party_characteristics_by_organization_id(
-        db=database,
-        organization_id=db_organization.existsDuring
+        db=next(override_get_db()),
+        organization=TMF632Schemas.OrganizationCreate(
+            tradingName="ITAv",
+            isHeadOffice=True,
+            isLegalEntity=True,
+            name="ITAv's Testbed",
+            organizationType="Testbed",
+            existsDuring=TMF632Schemas.TimePeriod(
+                startDateTime="2015-10-22T08:31:52.026Z",
+                endDateTime="2016-10-22T08:31:52.026Z",
+            ),
+            partyCharacteristic=[
+                TMF632Schemas.Characteristic(
+                    name="ci_cd_agent_url",
+                    value="http://192.168.1.200:8080/",
+                    valueType="URL",
+                ),
+                TMF632Schemas.Characteristic(
+                    name="ci_cd_agent_username",
+                    value="admin",
+                    valueType="str",
+                )
+            ],
+            status="validated"
+        )
     )
 
     startDateTime = datetime.datetime(2015, 10, 22, 8, 31, 52, 26000)
     endDateTime = datetime.datetime(2016, 10, 22, 8, 31, 52, 26000)
 
+    # Test
     assert db_organization.tradingName == "ITAv"
     assert db_organization.isHeadOffice
     assert db_organization.isLegalEntity
     assert db_organization.name == "ITAv's Testbed"
     assert db_organization.organizationType == "Testbed"
-
-    assert db_time_period.startDateTime.replace(tzinfo=None) == startDateTime
-    assert db_time_period.endDateTime.replace(tzinfo=None) == endDateTime
-
-    assert len(db_characteristics) == 2
-    assert db_characteristics[0].name == "ci_cd_agent_url"
-    assert db_characteristics[0].value == "http://192.168.1.200:8080/"
-    assert db_characteristics[0].valueType == "URL"
-    assert db_characteristics[1].name == "ci_cd_agent_username"
-    assert db_characteristics[1].value == "admin"
-    assert db_characteristics[1].valueType == "str"
+    assert db_organization.existsDuringParsed.startDateTime\
+        .replace(tzinfo=None) == startDateTime
+    assert db_organization.existsDuringParsed.endDateTime\
+        .replace(tzinfo=None) == endDateTime
+    assert len(db_organization.partyCharacteristicParsed)\
+        == 2
+    assert db_organization.partyCharacteristicParsed[0].name\
+        == "ci_cd_agent_url"
+    assert db_organization.partyCharacteristicParsed[0].value\
+        == "http://192.168.1.200:8080/"
+    assert db_organization.partyCharacteristicParsed[0].valueType\
+        == "URL"
+    assert db_organization.partyCharacteristicParsed[1].name\
+        == "ci_cd_agent_username"
+    assert db_organization.partyCharacteristicParsed[1].value\
+        == "admin"
+    assert db_organization.partyCharacteristicParsed[1].valueType\
+        == "str"
 
 
 def test_error_organization_database_creation_invalid_schema():

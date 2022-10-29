@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 12:00:16
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-29 11:15:46
+# @Last Modified time: 2022-10-29 13:59:06
 
 # general imports
 import logging
@@ -20,33 +20,6 @@ logger = logging.getLogger(__name__)
 #######################################
 #     Time Period CRUD Operations     #
 #######################################
-
-
-def create_time_period(db: Session,
-                       time_period: tmf632_party_mgmt.TimePeriod):
-
-    try:
-        time_period = models.TimePeriod(**time_period.dict())
-        db.add(time_period)
-        db.commit()
-        db.refresh(time_period)
-        logger.info(f"Time Period created: {time_period.as_dict()}")
-        return time_period
-
-    except Exception as e:
-        raise ImpossibleToCreateDatabaseEntry(
-            entity_type="TimePeriod",
-            entity_data=str(time_period),
-            reason=str(e)
-        )
-
-
-def get_time_period_by_id(db: Session, id: int):
-    return db\
-        .query(models.TimePeriod)\
-        .filter(models.TimePeriod.id == id)\
-        .filter(models.TimePeriod.deleted == bool(False))\
-        .first()
 
 
 def delete_time_period(db: Session, time_period_id: int):
@@ -71,43 +44,6 @@ def permanentely_delete_time_period(db: Session, time_period_id: int):
 #######################################
 #    Characteristic CRUD Operations   #
 #######################################
-
-def create_party_characteristic(
-    db: Session,
-    party_characteristic: tmf632_party_mgmt.Characteristic,
-    organization_id: int
-):
-    try:
-        db_party_characteristic = models.Characteristic(
-            **party_characteristic.dict()
-        )
-        db_party_characteristic.organization = organization_id
-        db.add(db_party_characteristic)
-        db.commit()
-        db.refresh(db_party_characteristic)
-        logger.info(
-            "Characteristic created for Organization " +
-            f"(id={organization_id}): {db_party_characteristic.as_dict()}"
-        )
-        return db_party_characteristic
-
-    except Exception as e:
-        raise ImpossibleToCreateDatabaseEntry(
-            entity_type="Characteristic",
-            entity_data=str(db_party_characteristic),
-            reason=str(e)
-        )
-
-
-def get_party_characteristics_by_organization_id(
-    db: Session,
-    organization_id: int
-):
-    return db\
-        .query(models.Characteristic)\
-        .filter(models.Characteristic.organization == organization_id)\
-        .filter(models.Characteristic.deleted == bool(False))\
-        .all()
 
 
 def permanentely_delete_party_characteristic_by_id(
@@ -174,7 +110,7 @@ def create_authorized_user(db: Session, user_id: str, organization_id: int):
             "Authorized User created for Organization " +
             f"(id={db_authorized_user}): {db_authorized_user.as_dict()}"
         )
-        print(db_authorized_user)
+        db_authorized_user.set_db(db)
         return db_authorized_user
 
     except Exception as e:
@@ -236,16 +172,6 @@ def delete_authorized_user_for_organization(
         db.commit()
 
 
-def get_organization_authorized_users(db: Session, organization_id: int):
-    return db\
-        .query(models.OrganizationAuthorizedUsers)\
-        .filter(
-            models.OrganizationAuthorizedUsers.organization == organization_id
-        )\
-        .filter(models.OrganizationAuthorizedUsers.deleted == bool(False))\
-        .all()
-
-
 def get_authorized_organizations_for_user(db: Session, user_id: str):
     return [
         get_organization_by_id(
@@ -305,6 +231,7 @@ def create_organization(db: Session,
         db.add(db_organization)
         db.flush()
         db.refresh(db_organization)
+        db_organization.set_db(db)
         logger.info(f"Organization created: {db_organization.as_dict()}")
 
         # Try to create a new partyCharacteristic DB Entry
@@ -342,10 +269,10 @@ def update_organization(db: Session,
             )
 
         # Get current organization
-        db_organization = db\
-            .query(models.Organization)\
-            .filter(models.Organization.id == organization_id)\
-            .first()
+        db_organization = get_organization_by_id(
+            db=db,
+            id=organization_id
+        )
 
         if not db_organization:
             raise EntityDoesNotExist(
@@ -357,12 +284,8 @@ def update_organization(db: Session,
         db_time_period_id = None
         if organization.existsDuring:
             # Delete previous one
-            old_time_period = get_time_period_by_id(
-                db,
-                db_organization.existsDuring
-            )
-            if old_time_period:
-                old_time_period.deleted = True
+            if db_organization.existsDuring:
+                db_organization.existsDuringParsed.deleted = True
                 db.flush()
             # create a new one
             db_time_period = models.TimePeriod(
@@ -375,10 +298,7 @@ def update_organization(db: Session,
 
         # Try to create a new partyCharacteristic DB Entry
         if organization.partyCharacteristic:
-            for characteristic in get_party_characteristics_by_organization_id(
-                    db,
-                    organization_id
-            ):
+            for characteristic in db_organization.partyCharacteristicParsed:
                 if characteristic:
                     characteristic.deleted = True
                     db.flush()
@@ -415,6 +335,7 @@ def update_organization(db: Session,
 
         # Finally, commit
         db.commit()
+        db_organization.set_db(db)
         return db_organization
 
     except EntityDoesNotExist as e:
@@ -432,10 +353,12 @@ def update_organization(db: Session,
 
 
 def get_organization_by_id(db: Session, id: int):
+    organization_model = models.Organization
+    organization_model.set_db(db)
     organization = db\
-        .query(models.Organization)\
-        .filter(models.Organization.id == id)\
-        .filter(models.Organization.deleted == bool(False))\
+        .query(organization_model)\
+        .filter(organization_model.id == id)\
+        .filter(organization_model.deleted == bool(False))\
         .first()
 
     return organization

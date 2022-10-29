@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-20 18:16:45
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-28 22:35:34
+# @Last Modified time: 2022-10-29 13:48:49
 
 from typing import Optional
 from fastapi import (
@@ -13,7 +13,6 @@ from fastapi import (
 from fastapi.params import Query as QueryParam
 from database.models.models import Organization
 from aux.constants import IDP_ADMIN_USER
-from database.crud import crud
 
 
 class GetOrganizationFilters:
@@ -117,19 +116,15 @@ def parse_organization_query_filters(filter: GetOrganizationFilters):
     }
 
 
-def check_if_user_is_authorized_to_access_an_organization(db, user,
-                                                          organization_id):
+def check_if_user_is_authorized_to_access_an_organization(user, organization):
     if IDP_ADMIN_USER not in user.roles:
         if user.sub not in [
-            user.user_id
-            for user
-            in crud.get_organization_authorized_users(
-                db=db,
-                organization_id=organization_id,
-            )
+            authorized_user.user_id
+            for authorized_user
+            in organization.authorizedUsersParsed
         ]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail='User not authorized to access data ' +
-                f'related with organization {organization_id}',
+                f'related with organization {organization.id}',
             )

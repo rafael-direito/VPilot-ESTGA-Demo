@@ -3,7 +3,7 @@
 # @Email:  rdireito@av.it.pt
 # @Copyright: Insituto de Telecomunicações - Aveiro, Aveiro, Portugal
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-28 22:49:52
+# @Last Modified time: 2022-10-29 13:58:05
 
 # generic imports
 from fastapi import (
@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from database.crud import crud
 from http import HTTPStatus
 from typing import Optional
-
+import logging
 
 # custom imports
 from routers import utils as Utils
@@ -35,6 +35,9 @@ from aux.constants import (
     IDP_ADMIN_USER,
     IDP_TESTBED_ADMIN_USER,
 )
+
+# Logger
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter()
@@ -61,15 +64,12 @@ async def create_organization(
     try:
         organization = crud.create_organization(db, organization)
 
-        # Parse Organization to TM632 Organization
-        tmf632_organization = Utils.organization_to_organization_schema(
-            db=db,
-            organization=organization
-        )
-
         return Utils.create_http_response(
             http_status=HTTPStatus.CREATED,
-            content=jsonable_encoder(tmf632_organization)
+            # Return parsed
+            content=jsonable_encoder(
+                Utils.organization_to_organization_schema(organization)
+            )
         )
 
     except CRUDExceptions.ImpossibleToCreateDatabaseEntry as exception:
@@ -135,27 +135,23 @@ async def get_organization(
                 # function will raise an exception and the method will return a
                 # 403 FORBIDDEN
                 check_if_user_is_authorized_to_access_an_organization(
-                    db=db,
                     user=user,
-                    organization_id=id
+                    organization=organizations[0]
                 )
 
         # Operations for when the client requests all organization
         else:
             organizations = crud.get_all_organizations(db, filter_dict)
 
-        # General workflow for all requests
-        # Parse Organization to TM632 Organization
-        tmf632_organizations = [
-            Utils.organization_to_organization_schema(
-                db=db,
-                organization=organization
-            )
-            if organization != {}
-            else {}
-            for organization
-            in organizations
-        ]
+        # Parse to Pydantic Model
+        tmf632_organizations = []
+        for organization in organizations:
+            if organization != {}:
+                tmf632_organizations.append(
+                    Utils.organization_to_organization_schema(organization)
+                )
+            else:
+                tmf632_organizations.append(organization)
 
         # Apply 'fields' filter and encode/parse to dict
         encoded_organizations = [
@@ -245,18 +241,19 @@ async def update_organization(
     user=Depends(idp.get_current_user(required_roles=[IDP_TESTBED_ADMIN_USER]))
 ):
     try:
-        updated_organization = crud.update_organization(db, id, organization)
-
+        current_organization = crud.get_organization_by_id(db, id)
         # If the user is not also an admin user, we have to verify if
         # it has the permissions to get the organization he requested
         # If the user doesn't possess the needed permissions, this
         # function will raise an exception and the method will return a
         # 403 FORBIDDEN
+
         check_if_user_is_authorized_to_access_an_organization(
-            db=db,
             user=user,
-            organization_id=id
+            organization=current_organization
         )
+
+        updated_organization = crud.update_organization(db, id, organization)
 
         # Response
         return Utils.create_http_response(
@@ -265,8 +262,7 @@ async def update_organization(
                 # And encode it
                 content=jsonable_encoder(
                     Utils.organization_to_organization_schema(
-                        db=db,
-                        organization=updated_organization
+                        updated_organization
                     )
                 )
         )

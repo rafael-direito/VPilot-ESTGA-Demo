@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 11:38:27
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-25 22:14:59
+# @Last Modified time: 2022-10-29 12:35:13
 
 # generic imports
 from sqlalchemy import Boolean, Column, ForeignKey, String, DateTime
@@ -49,6 +49,50 @@ class Organization(Base):
     def __str__(self):
         return str(self.as_dict())
 
+    # Used to set the db for the partyCharacteristicParsed and
+    # existsDuringParsed properties
+    db = None
+
+    @classmethod
+    def set_db(self, db):
+        self.db = db
+
+    # This enables not having to create specific methods to get the
+    # organization's party characteristics
+    @property
+    def partyCharacteristicParsed(self):
+        if not self.db:
+            return []
+        return self.db\
+            .query(Characteristic)\
+            .filter(Characteristic.organization == self.id)\
+            .filter(Characteristic.deleted == bool(False))\
+            .all()
+
+    # This enables not having to create specific methods to get the
+    # organization's time period
+    @property
+    def existsDuringParsed(self):
+        if not self.db:
+            return
+        return self.db\
+            .query(TimePeriod)\
+            .filter(TimePeriod.id == self.existsDuring)\
+            .filter(TimePeriod.deleted == bool(False))\
+            .first()
+
+    # This enables not having to create specific methods to get the
+    # organization's authorized users
+    @property
+    def authorizedUsersParsed(self):
+        if not self.db:
+            return []
+        return self.db\
+            .query(OrganizationAuthorizedUsers)\
+            .filter(OrganizationAuthorizedUsers.organization == self.id)\
+            .filter(OrganizationAuthorizedUsers.deleted == bool(False))\
+            .all()
+
 
 class Characteristic(Base):
     __tablename__ = "Characteristic"
@@ -89,3 +133,32 @@ class OrganizationAuthorizedUsers(Base):
 
     def __str__(self):
         return str(self.as_dict())
+
+    # Used to set the db for the partyCharacteristicParsed and
+    # existsDuringParsed properties
+    db = None
+
+    @classmethod
+    def set_db(self, db):
+        self.db = db
+
+    # This enables not having to create specific methods to get the
+    # users' authorized organizations
+    @property
+    def authorizedOriganizations(self):
+        if not self.db:
+            return []
+        organization_model = Organization
+        organization_model.set_db(self.db)
+        return [
+            self.db
+                .query(organization_model)
+                .filter(organization_model.id == organization.id)
+                .first()
+            for organization
+            in self.db
+                .query(OrganizationAuthorizedUsers)
+                .filter(OrganizationAuthorizedUsers.user_id == self.user_id)
+                .filter(OrganizationAuthorizedUsers.deleted == bool(False))
+                .all()
+        ]

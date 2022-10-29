@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 21:13:44
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-29 10:32:05
+# @Last Modified time: 2022-10-29 12:43:30
 
 # general imports
 import pytest
@@ -50,42 +50,45 @@ def setup(monkeypatch, mocker):
 # Tests
 def test_time_period_correct_database_creation_both_dates():
 
-    database = next(override_get_db())
-
-    time_period = TMF632Schemas.TimePeriod(
-        startDateTime="2015-10-22T08:31:52.026Z",
-        endDateTime="2016-10-22T08:31:52.026Z",
+    # Prepare Test
+    result = crud.create_organization(
+        db=next(override_get_db()),
+        organization=TMF632Schemas.OrganizationCreate(
+            tradingName="ITAv",
+            existsDuring=TMF632Schemas.TimePeriod(
+                startDateTime="2015-10-22T08:31:52.026Z",
+                endDateTime="2016-10-22T08:31:52.026Z",
+            )
+        )
     )
-
-    result = crud.create_time_period(
-        db=database,
-        time_period=time_period
-    )
-
     startDateTime = datetime.datetime(2015, 10, 22, 8, 31, 52, 26000)
     endDateTime = datetime.datetime(2016, 10, 22, 8, 31, 52, 26000)
 
-    assert result.startDateTime.replace(tzinfo=None) == startDateTime
-    assert result.endDateTime.replace(tzinfo=None) == endDateTime
+    # Test
+    assert result.existsDuringParsed.startDateTime.replace(tzinfo=None)\
+        == startDateTime
+    assert result.existsDuringParsed.endDateTime.replace(tzinfo=None)\
+        == endDateTime
 
 
 def test_time_period_correct_database_creation_only_1_date():
 
-    database = next(override_get_db())
-
-    time_period = TMF632Schemas.TimePeriod(
-        startDateTime="2015-10-22T08:31:52.026Z",
+    # Prepare Test
+    result = crud.create_organization(
+        db=next(override_get_db()),
+        organization=TMF632Schemas.OrganizationCreate(
+            tradingName="ITAv",
+            existsDuring=TMF632Schemas.TimePeriod(
+                startDateTime="2015-10-22T08:31:52.026Z",
+            )
+        )
     )
-
-    result = crud.create_time_period(
-        db=database,
-        time_period=time_period
-    )
-
     startDateTime = datetime.datetime(2015, 10, 22, 8, 31, 52, 26000)
 
-    assert result.startDateTime.replace(tzinfo=None) == startDateTime
-    assert result.endDateTime is None
+    # Test
+    assert result.existsDuringParsed.startDateTime.replace(tzinfo=None)\
+        == startDateTime
+    assert result.existsDuringParsed.endDateTime is None
 
 
 def test_time_period_incorrect_data():

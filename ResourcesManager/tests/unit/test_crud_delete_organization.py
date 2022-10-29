@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 21:13:44
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-29 10:32:21
+# @Last Modified time: 2022-10-29 12:44:35
 
 # general imports
 import pytest
@@ -49,22 +49,20 @@ def setup(monkeypatch, mocker):
 # Tests
 def test_simple_organization_database_deletion():
 
+    # Prepare Test
     database = next(override_get_db())
-
-    organization1 = TMF632Schemas.OrganizationCreate(
-        tradingName="ITAv"
-    )
-    organization2 = TMF632Schemas.OrganizationCreate(
-        tradingName="ITAv"
-    )
 
     db_organization1 = crud.create_organization(
         db=database,
-        organization=organization1
+        organization=TMF632Schemas.OrganizationCreate(
+            tradingName="ITAv"
+        )
     )
     db_organization2 = crud.create_organization(
         db=database,
-        organization=organization2
+        organization=TMF632Schemas.OrganizationCreate(
+            tradingName="ITAv"
+        )
     )
 
     crud.delete_organization(
@@ -72,6 +70,7 @@ def test_simple_organization_database_deletion():
         organization_id=db_organization1.id
     )
 
+    # Test
     assert db_organization1.deleted
     assert not db_organization2.deleted
 
