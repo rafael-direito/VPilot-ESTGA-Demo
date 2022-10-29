@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-17 21:13:44
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-29 16:42:37
+# @Last Modified time: 2022-10-29 16:43:09
 
 # general imports
 import pytest
@@ -180,4 +180,3 @@ def test_get_organization_authorized_users_without_permissions():
     assert response.json()['code'] == 403
     assert response.json()['reason'] == 'User not authorized to access data '\
         f'related with organization {result.id}'
-    
