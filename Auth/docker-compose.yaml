@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # @Author: Rafael Direito
 # @Date:   2022-10-24 14:17:09
-# @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-29 17:59:07
+# @Last Modified by:   Daniel Gomes
+# @Last Modified time: 2022-10-31 15:02:54
 version: '3'
 
 volumes:
@@ -21,6 +21,7 @@ services:
 
   keycloak:
     image: jboss/keycloak:18.0.2 
+    container_name: keycloak
     command:
       - " -b 0.0.0.0 "
     environment:
@@ -32,6 +33,7 @@ services:
       DB_PASSWORD: testkeycloakpassword
       KEYCLOAK_USER: keycloakuser
       KEYCLOAK_PASSWORD: keycloakpassword
+      KEYCLOAK_HOSTNAME: keycloak
       PROXY_ADDRESS_FORWARDING: "true"
       KEYCLOAK_LOGLEVEL: DEBUG
       MY_REALM_NAME: vpilot
