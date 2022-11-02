@@ -33,7 +33,8 @@ services:
       DB_PASSWORD: testkeycloakpassword
       KEYCLOAK_USER: keycloakuser
       KEYCLOAK_PASSWORD: keycloakpassword
-      KEYCLOAK_HOSTNAME: keycloak
+      # Fixes token related issues
+      #KEYCLOAK_HOSTNAME: keycloak
       PROXY_ADDRESS_FORWARDING: "true"
       KEYCLOAK_LOGLEVEL: DEBUG
       MY_REALM_NAME: vpilot
