@@ -3,7 +3,7 @@
 # @Email:  rdireito@av.it.pt
 # @Copyright: Insituto de Telecomunicações - Aveiro, Aveiro, Portugal
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-29 21:58:40
+# @Last Modified time: 2022-11-01 18:41:50
 
 # generic imports
 from fastapi import (
@@ -121,8 +121,8 @@ async def validation_authentication_authorization(request, exc):
             http_status=HTTPStatus.UNAUTHORIZED,
             content=RouterAux.compose_error_payload(
                 code=HTTPStatus.UNAUTHORIZED,
-                reason="You should be authenticated in order to perform this" +
-                "request",
+                reason="You should be authenticated in order to perform " +
+                "this request",
             )
         )
     elif exc.status_code == status.HTTP_403_FORBIDDEN:

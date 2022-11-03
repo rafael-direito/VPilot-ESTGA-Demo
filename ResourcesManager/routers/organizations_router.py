@@ -3,7 +3,7 @@
 # @Email:  rdireito@av.it.pt
 # @Copyright: Insituto de Telecomunicações - Aveiro, Aveiro, Portugal
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-29 21:58:57
+# @Last Modified time: 2022-11-03 13:18:13
 
 # generic imports
 from fastapi import (
@@ -65,8 +65,12 @@ async def create_organization(
     user=Depends(idp.get_current_user(required_roles=[IDP_ADMIN_USER]))
 ):
     try:
+        logger.info(f"User {user} is trying to create a new organization...")
+
         organization = crud.create_organization(db, organization)
 
+        logger.info(f"User {user} created the following organization: " +
+                    f"{organization}")
         return create_http_response(
             http_status=HTTPStatus.CREATED,
             # Return parsed
@@ -113,6 +117,8 @@ async def get_organization(
         # These operations ignore all query filters, since the organization is
         # already 'filtered' using its id
         if id:
+            logger.info(f"User {user} is trying to obtain information " +
+                        f"regarding  organization with id={id}...")
             organizations = [crud.get_organization_by_id(db, id)]
             if not organizations[0]:
                 organizations[0] = {}
@@ -129,6 +135,8 @@ async def get_organization(
 
         # Operations for when the client requests all organization
         else:
+            logger.info(f"User {user} is trying to obtain information " +
+                        "regarding all organizations...")
             organizations = crud.get_all_organizations(db, filter_dict)
 
         # Parse to Pydantic Model
@@ -140,6 +148,9 @@ async def get_organization(
                 )
             else:
                 tmf632_organizations.append(organization)
+
+        logger.info(f"User {user} obtained information regarding the " +
+                    f"following organizations {tmf632_organizations}")
 
         # Apply 'fields' filter and encode/parse to dict
         encoded_organizations = [
@@ -174,7 +185,13 @@ async def delete_organization(
     user=Depends(idp.get_current_user(required_roles=[IDP_ADMIN_USER]))
 ):
     try:
+        logger.info(f"User {user} is trying to delete the organization with " +
+                    f"the id {id}...")
+
         crud.delete_organization(db, id)
+
+        logger.info(f"User {user} deleted the organization with " +
+                    f"the id {id}")
         # Response
         return create_http_response(
                 http_status=HTTPStatus.NO_CONTENT
@@ -196,6 +213,9 @@ async def update_organization(
     user=Depends(idp.get_current_user(required_roles=[IDP_TESTBED_ADMIN_USER]))
 ):
     try:
+        logger.info(f"User {user} is trying to patch the organization with " +
+                    f"the id {id}...")
+
         current_organization = crud.get_organization_by_id(db, id)
         # If the user is not also an admin user, we have to verify if
         # it has the permissions to get the organization he requested
@@ -210,6 +230,8 @@ async def update_organization(
 
         updated_organization = crud.update_organization(db, id, organization)
 
+        logger.info(f"User {user} is patched the organization with the id " +
+                    f"{id}. Updated organization: {updated_organization}")
         # Response
         return create_http_response(
                 http_status=HTTPStatus.OK,
@@ -239,9 +261,8 @@ async def get_organization_authorized_users(
     user=Depends(idp.get_current_user(required_roles=[IDP_TESTBED_ADMIN_USER]))
 ):
     try:
-        # Operations for when the client requests a specific organization
-        # These operations ignore all query filters, since the organization is
-        # already 'filtered' using its id
+        logger.info(f"User {user} is trying to get the authorized users for " +
+                    f"the organization with the id {id}...")
 
         # Get the organization, if it exists. Else, raise exception
         organization = crud.get_organization_by_id(db, id)
@@ -260,6 +281,9 @@ async def get_organization_authorized_users(
             user=user,
             organization=organization
         )
+
+        logger.info(f"User {user} retrieved the authorized users for " +
+                    f"the organization with the id {id}.")
 
         # Response
         return create_http_response(
@@ -293,9 +317,8 @@ async def create_organization_authorized_user(
     )
 ):
     try:
-        # Operations for when the client requests a specific organization
-        # These operations ignore all query filters, since the organization is
-        # already 'filtered' using its id
+        logger.info(f"User {user} is trying to create an authorized users " +
+                    f"for the organization with the id {id}...")
 
         # Get the organization, if it exists. Else, raise exception
         organization = crud.get_organization_by_id(db, id)
@@ -316,11 +339,15 @@ async def create_organization_authorized_user(
         )
 
         # Create Authorized User
-        crud.create_authorized_user(
+        authorized_user = crud.create_authorized_user(
             db=db,
             user_id=user.user_id,
             organization_id=id
         )
+
+        logger.info(f"User {user} created an authorized user " +
+                    f"({authorized_user}) for the organization with the " +
+                    "id {id}...")
 
         # Response
         return create_http_response(
@@ -353,9 +380,8 @@ async def delete_organization_authorized_user(
     )
 ):
     try:
-        # Operations for when the client requests a specific organization
-        # These operations ignore all query filters, since the organization is
-        # already 'filtered' using its id
+        logger.info(f"User {auth_user} is trying to delete an authorized " +
+                    f"user of the organization with the id {id}...")
 
         # Get the organization, if it exists. Else, raise exception
         organization = crud.get_organization_by_id(db, id)
@@ -380,6 +406,9 @@ async def delete_organization_authorized_user(
             user_id=user_id,
             organization_id=id
         )
+
+        logger.info(f"User {auth_user} deleted an authorized user of the " +
+                    f"organization with the id {id}...")
 
         # Response
         return create_http_response(

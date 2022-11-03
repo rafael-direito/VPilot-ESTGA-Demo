@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-20 18:16:45
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-10-29 21:57:11
+# @Last Modified time: 2022-11-03 13:19:48
 
 # general imports
 from fastapi import (
@@ -13,19 +13,23 @@ from fastapi import (
 from fastapi.params import Query as QueryParam
 from fastapi.responses import JSONResponse
 from http import HTTPStatus
+import logging
 from typing import (
     Any,
     Optional
 )
 
 # custom imports
-import database.crud.exceptions as CRUDExceptions
+from database.crud import exceptions as CRUDExceptions
 from database.models import models
 from aux.constants import IDP_ADMIN_USER
 from schemas import (
     tmf632_party_mgmt as TMF632,
     authorized_users as AuthorizedUsersSchemas
 )
+
+# Logger
+logger = logging.getLogger(__name__)
 
 
 class GetOrganizationFilters:
@@ -212,6 +216,8 @@ def organization_authorized_users_to_schema(organization: models.Organization):
 
 
 def exception_to_http_response(exception):
+    logger.error(f"The following exception was raised: {exception}")
+
     if isinstance(exception, CRUDExceptions.ImpossibleToCreateDatabaseEntry):
         return create_http_response(
             http_status=HTTPStatus.INTERNAL_SERVER_ERROR,
