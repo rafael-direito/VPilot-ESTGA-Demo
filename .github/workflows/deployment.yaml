@@ -3,7 +3,7 @@
 # @Author: Rafael Direito
 # @Date:   2023-03-09 14:26:19
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2023-03-09 17:44:45
+# @Last Modified time: 2023-03-09 17:49:49
 # This is a basic workflow to help you get started with Actions
 
 name: CI/CD
@@ -80,4 +80,4 @@ jobs:
       - name: Build Resources Manager Docker Image
         run: |
           cd ResourcesManager/docker
-          docker compose up -d
+          docker compose down; docker compose up -d
