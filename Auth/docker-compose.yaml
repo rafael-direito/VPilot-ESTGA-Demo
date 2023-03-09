@@ -2,7 +2,7 @@
 # @Author: Rafael Direito
 # @Date:   2022-10-24 14:17:09
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2023-03-09 17:59:14
+# @Last Modified time: 2023-03-09 18:00:16
 version: '3'
 
 volumes:
@@ -20,15 +20,6 @@ services:
       always
     networks:
       - vpilot
-
-
-export IDP_SERVER_URL="http://localhost:8085/auth" #"http://keycloack:8080/auth"
-export IDP_CLIENT_ID="vpilot-client"
-export IDP_CLIENT_SECRET="dummy_client_secret"
-export IDP_ADMIN_CLIENT_SECRET="dummy_admin_secret"
-export IDP_REALM="vpilot"
-export IDP_CALLBACK_URI="http://127.0.0.1:8000/callback"
-
   keycloak:
     image: jboss/keycloak:18.0.2 
     container_name: keycloak
