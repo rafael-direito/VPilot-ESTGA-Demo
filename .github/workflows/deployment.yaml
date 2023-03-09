@@ -68,6 +68,23 @@ jobs:
           cd ResourcesManager/
           ./build_docker_image.sh
   
+  publish_docker_image:
+    runs-on: self-hosted
+    needs: build
+    steps:  
+      - name: Build Resources Manager Docker Image
+        env:
+          habor_registry_name: ${{ secrets.ATNOG_HARBOR_REGISTRY_NAME }}
+          habor_username: ${{ secrets.ATNOG_HARBOR_USERNAME }}
+          habor_password: ${{ secrets.ATNOG_HARBOR_PASSWORD }}
+
+        run: |
+          docker login --username="$habor_username" --password="$habor_password" "$habor_registry_name"
+          docker tag vpilot:resources_manager "$habor_registry_name"/rdireito/vpilot:resources_manager:latest
+          docker push "$habor_registry_name"/rdireito/vpilot:resources_manager:latest
+          
+
+
   deployment:
     runs-on: self-hosted
     needs: build
