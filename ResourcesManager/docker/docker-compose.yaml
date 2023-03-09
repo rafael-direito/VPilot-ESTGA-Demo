@@ -7,7 +7,7 @@ version: '3'
 
 services:
   resources_manager:
-    image: vpilot:resources_manager
+    image: atnog-harbor.av.it.pt/rdireito/vpilot:resources_manager
     container_name: vpilot_resources_manager
     environment:
       IDP_SERVER_URL: 'http://keycloak:8080/auth'
