@@ -1,0 +1,31 @@
+# -*- coding: utf-8 -*-
+# @Author: Rafael Direito
+# @Date:   2022-10-24 14:17:09
+# @Last Modified by:   Rafael Direito
+# @Last Modified time: 2023-03-09 17:02:06
+version: '3'
+
+services:
+  resources_manager:
+    image: vpilot:resources_manager
+    container_name: vpilot_resources_manager
+    environment:
+      IDP_SERVER_URL: 'http://keycloak:8080/auth'
+      IDP_CLIENT_ID: 'vpilot-client'
+      IDP_CLIENT_SECRET: 'dummy_client_secret'
+      IDP_ADMIN_CLIENT_SECRET: 'dummy_admin_secret'
+      IDP_REALM: 'vpilot'
+      IDP_CALLBACK_URI: 'http://resources_manager:8000/callback'
+    restart:
+      always
+    networks:
+      - vpilot
+    ports:
+      - '8000:80'
+    external_links:
+      - keycloak:keycloak
+
+networks:
+  vpilot:
+    external: true
+

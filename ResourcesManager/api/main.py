@@ -3,7 +3,7 @@
 # @Email:  rdireito@av.it.pt
 # @Copyright: Insituto de Telecomunicações - Aveiro, Aveiro, Portugal
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2022-11-01 18:41:50
+# @Last Modified time: 2023-03-09 16:47:35
 
 # generic imports
 from fastapi import (
@@ -45,6 +45,7 @@ fh.setFormatter(formatter)
 logger.addHandler(fh)
 logger = logging.getLogger(__name__)
 
+logging.info("Starting API..")
 
 fast_api_tags_metadata = [
     {

@@ -33,10 +33,6 @@ services:
       DB_PASSWORD: testkeycloakpassword
       KEYCLOAK_USER: keycloakuser
       KEYCLOAK_PASSWORD: keycloakpassword
-<<<<<<< HEAD
-=======
-      # Fixes token related issues
->>>>>>> 0b0eb50b73753582531bbfba486fb39def3db34f
       #KEYCLOAK_HOSTNAME: keycloak
       PROXY_ADDRESS_FORWARDING: "true"
       KEYCLOAK_LOGLEVEL: DEBUG
