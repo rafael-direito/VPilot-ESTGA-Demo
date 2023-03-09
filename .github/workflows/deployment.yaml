@@ -3,7 +3,7 @@
 # @Author: Rafael Direito
 # @Date:   2023-03-09 14:26:19
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2023-03-09 17:49:49
+# @Last Modified time: 2023-03-09 17:52:06
 # This is a basic workflow to help you get started with Actions
 
 name: CI/CD
@@ -54,6 +54,7 @@ jobs:
     
   build:
     runs-on: self-hosted
+    needs: test
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -69,6 +70,7 @@ jobs:
   
   deployment:
     runs-on: self-hosted
+    needs: build
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
