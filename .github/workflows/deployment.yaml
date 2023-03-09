@@ -80,7 +80,7 @@ jobs:
 
         run: |
           docker login --username="$habor_username" --password="$habor_password" "$habor_registry_name"
-          docker tag vpilot:resources_manager "$habor_registry_name"/rdireito/vpilot:resources_manager:latest
+          docker tag vpilot:resources_manager "$habor_registry_name"/rdireito/vpilot:resources_manager
           docker push "$habor_registry_name"/rdireito/vpilot:resources_manager
           
 
