@@ -3,7 +3,7 @@
 # @Email:  rdireito@av.it.pt
 # @Copyright: Insituto de Telecomunicações - Aveiro, Aveiro, Portugal
 # @Last Modified by:   Rafael Direito
-# @Last Modified time: 2023-03-14 19:13:08
+# @Last Modified time: 2023-03-14 20:50:25
 
 # generic imports
 from fastapi import (
@@ -53,7 +53,7 @@ def get_db():
 
 @router.get("/hello")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Hello All!"}
 
 @router.post(
     "/organization/",
